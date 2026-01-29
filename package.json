@@ -3,12 +3,25 @@
   "description": "",
   "version": "0.0.0",
   "author": "Crescware Inc.",
+  "devDependencies": {
+    "@types/node": "25.1.0",
+    "@typescript/native-preview": "7.0.0-dev.20260124.1",
+    "oxfmt": "0.27.0",
+    "oxlint": "1.42.0",
+    "tsup": "8.5.1",
+    "turbo": "2.8.0",
+    "vitest": "4.0.18"
+  },
   "keywords": [],
   "license": "MIT",
   "main": "index.js",
   "packageManager": "pnpm@10.28.2",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "check": "turbo run turbo:check",
+    "check:lint": "oxlint",
+    "check:types": "tsgo --noEmit",
+    "format": "oxfmt --write src",
+    "test": "vitest run"
   },
   "type": "module"
 }
