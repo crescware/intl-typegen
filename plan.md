@@ -35,7 +35,7 @@ type AaaDictionary = {
     a2: string;
 };
 
-function useAaaTranslation() {}
+function useAaaTranslation() { /* TODO */ }
 ```
 
 `use-bbb-translation.ts` (nested):
@@ -48,7 +48,7 @@ type BbbDictionary = {
     b2: string;
 };
 
-function useBbbTranslation() {}
+function useBbbTranslation() { /* TODO */ }
 ```
 
 ## Naming Conventions
@@ -82,10 +82,12 @@ src/
 ```yaml
 input: ./locales/en.json
 output: ./src/generated
+overwrite: true
 ```
 
 - `input` - Path to input JSON file (required)
 - `output` - Output directory (required)
+- `overwrite` - If `true`, overwrite existing files silently. If `false`, skip existing files with a warning.
 
 ### CLI Interface
 ```bash
@@ -121,34 +123,10 @@ Reads `intl-typegen.config.yaml` from current directory.
    - Read JSON
    - Generate and write files
 
-## Open Issues (TBD)
-
-### Issue 1: Non-string values
-What should happen when a JSON value is not a string (e.g., `123`, `true`, `["a","b"]`, `null`)?
-
-Options:
-- Type as `any`
-- Infer actual type (`number`, `boolean`, `string[]`, `null`)
-- Throw error
-
-### Issue 2: Output file conflicts
-What should happen when an output file already exists?
-
-Options:
-- Overwrite silently
-- Skip with warning
-- Throw error
-
 ## Decisions Made
 
-- **Nested objects**: Recursively typed (supported at any depth)
-- **Exports**: None (no `export` keywords)
-- **CLI source code**: TypeScript
-- **Formatting**: Tab indentation
-
-## Decisions Pending
-
-- **Hook function body**: Empty, return type, parameters, or implementation? (TBD)
+- **Non-string values**: Infer raw type (`number`, `boolean`, `null`, `string[]`, etc.)
+- **Formatting**: Tab indentation, no `export` keywords
 
 ## Build & Development
 
