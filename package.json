@@ -1,0 +1,14 @@
+{
+  "name": "intl-typegen",
+  "description": "",
+  "version": "0.0.0",
+  "author": "Crescware Inc.",
+  "keywords": [],
+  "license": "MIT",
+  "main": "index.js",
+  "packageManager": "pnpm@10.28.2",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "type": "module"
+}
