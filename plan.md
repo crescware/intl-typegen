@@ -1,5 +1,7 @@
 # intl-typegen CLI Implementation Plan
 
+**After completing any implementation work, run:** `pnpm format && pnpm build && pnpm check`
+
 ## Overview
 CLI tool that generates TypeScript files from i18n JSON translation files. Each top-level key in the JSON becomes a separate TypeScript file with a type definition and hook function.
 

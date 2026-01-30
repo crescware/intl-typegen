@@ -2,7 +2,7 @@ import { existsSync, writeFileSync } from "node:fs";
 
 import { configFilename } from "./config-filename";
 
-const defaultConfig = `input: ./locales/en.json
+const defaultConfig = `input: ./locales
 output: ./src/generated
 overwrite: false
 `;

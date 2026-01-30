@@ -29,7 +29,7 @@ describe("init", () => {
   });
 
   test("should write default content", () => {
-    const expected = `input: ./locales/en.json
+    const expected = `input: ./locales
 output: ./src/generated
 overwrite: false
 `;

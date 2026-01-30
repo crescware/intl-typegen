@@ -1,16 +1,14 @@
-import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { parse } from "valibot";
 
 import { loadConfig } from "../config/load-config";
 import { generateFile } from "./generate-file";
 import { getOutputFilename } from "./get-output-filename";
-import { inputSchema } from "./input";
+import { loadInputDirectory } from "./load-input-directory";
 
 export function generate(): void {
   const config = loadConfig();
-  const inputContent = readFileSync(config.input, "utf-8");
-  const json = parse(inputSchema, JSON.parse(inputContent));
+  const { data: json } = loadInputDirectory(config.input);
 
   if (!existsSync(config.output)) {
     mkdirSync(config.output, { recursive: true });
