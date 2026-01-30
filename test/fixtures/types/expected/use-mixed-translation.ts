@@ -1,4 +1,4 @@
-type MixedDictionary = {
+export type MixedDictionary = {
 	str: string;
 	num: number;
 	bool: boolean;
@@ -7,4 +7,4 @@ type MixedDictionary = {
 	emptyArr: unknown[];
 }
 
-function useMixedTranslation() { /* TODO */ }
+export function useMixedTranslation() { /* TODO */ }

@@ -1,5 +1,5 @@
-type FooBarDictionary = {
+export type FooBarDictionary = {
 	foo: string;
 }
 
-function useFooBarTranslation() { /* TODO */ }
+export function useFooBarTranslation() { /* TODO */ }

@@ -9,8 +9,8 @@ export function generateFile(name: string, obj: { [key: string]: JsonValue }): s
   const functionName = `use${pascalName}Translation`;
   const typeBody = generateTypeBody(obj);
 
-  return `type ${typeName} = ${typeBody}
+  return `export type ${typeName} = ${typeBody}
 
-function ${functionName}() { /* TODO */ }
+export function ${functionName}() { /* TODO */ }
 `;
 }

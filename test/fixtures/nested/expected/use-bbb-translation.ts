@@ -1,4 +1,4 @@
-type BbbDictionary = {
+export type BbbDictionary = {
 	b1: {
 		b1a: string;
 		b1b: string;
@@ -6,4 +6,4 @@ type BbbDictionary = {
 	b2: string;
 }
 
-function useBbbTranslation() { /* TODO */ }
+export function useBbbTranslation() { /* TODO */ }

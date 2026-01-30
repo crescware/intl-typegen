@@ -1,6 +1,6 @@
-type AaaDictionary = {
+export type AaaDictionary = {
 	a1: string;
 	a2: string;
 }
 
-function useAaaTranslation() { /* TODO */ }
+export function useAaaTranslation() { /* TODO */ }
