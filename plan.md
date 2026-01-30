@@ -8,7 +8,15 @@
 
 ## Remaining Features
 
-### 1. Identifier Sanitization (`src/generate/sanitize-identifier.ts`)
+### 1. Dry-run Mode (`-n, --dry-run` flag for `generate` command)
+
+Add `--dry-run` (short: `-n`) option to the `generate` command:
+
+- Lists files that would be created/overwritten
+- Shows file content preview
+- Does not write any files to disk
+
+### 2. Identifier Sanitization (`src/generate/sanitize-identifier.ts`)
 
 Sanitize JSON keys to produce valid TypeScript identifiers:
 
@@ -19,20 +27,12 @@ Sanitize JSON keys to produce valid TypeScript identifiers:
 **TypeScript reserved words to handle:**
 `break`, `case`, `catch`, `class`, `const`, `continue`, `debugger`, `default`, `delete`, `do`, `else`, `enum`, `export`, `extends`, `false`, `finally`, `for`, `function`, `if`, `import`, `in`, `instanceof`, `new`, `null`, `return`, `super`, `switch`, `this`, `throw`, `true`, `try`, `typeof`, `var`, `void`, `while`, `with`, `yield`, `let`, `static`, `implements`, `interface`, `package`, `private`, `protected`, `public`
 
-### 2. Collision Detection (`src/generate/detect-collisions.ts`)
+### 3. Collision Detection (`src/generate/detect-collisions.ts`)
 
 Before generating files, detect when two keys produce the same filename after case conversion:
 
 - Exit with error listing the conflicting keys
 - Example: `fooBar` and `foo-bar` both become `use-foo-bar-translation.ts` → error
-
-### 3. Dry-run Mode (`-n, --dry-run` flag for `generate` command)
-
-Add `--dry-run` (short: `-n`) option to the `generate` command:
-
-- Lists files that would be created/overwritten
-- Shows file content preview
-- Does not write any files to disk
 
 ---
 
@@ -51,8 +51,8 @@ Add `--dry-run` (short: `-n`) option to the `generate` command:
 
 ### Integration Tests (to add to `src/generate/generate.test.ts`)
 
-- Dry-run mode (no files written, correct output displayed)
 - Locale file generation (`available-locale.ts` from input filenames)
+- Dry-run mode (no files written, correct output displayed)
 
 ### Error Case Tests
 
