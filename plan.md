@@ -26,6 +26,13 @@ Before generating files, detect when two keys produce the same filename after ca
 - Exit with error listing the conflicting keys
 - Example: `fooBar` and `foo-bar` both become `use-foo-bar-translation.ts` → error
 
+### 3. Validate `variableNameConvention` (`src/config/load-config.ts`)
+
+After loading the config, validate that `availableLocale.variableNameConvention` contains the `{name}` placeholder:
+
+- Throw `UsageError` if `{name}` is missing
+- Example: `"schema"` → error (missing `{name}`), `"{name}Schema"` → valid
+
 ---
 
 ## Remaining Tests
@@ -40,10 +47,6 @@ Before generating files, detect when two keys produce the same filename after ca
 | `src/generate/available-locale/apply-variable-name-convention.test.ts` | Variable name convention logic |
 | `src/generate/sanitize-identifier.test.ts` | Identifier sanitization (after feature implemented) |
 | `src/generate/detect-collisions.test.ts` | Collision detection (after feature implemented) |
-
-### Integration Tests (to add to `src/generate/generate.test.ts`)
-
-- Locale file generation (`available-locale.ts` from input filenames)
 
 ### Error Case Tests
 
