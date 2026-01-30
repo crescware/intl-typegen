@@ -11,34 +11,34 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 const cliPath = join(__dirname, "..", "dist", "index.js");
 
 describe("init", () => {
-	let tempDir: string;
+  let tempDir: string;
 
-	beforeEach(() => {
-		tempDir = mkdtempSync(join(tmpdir(), "intl-typegen-test-"));
-	});
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "intl-typegen-test-"));
+  });
 
-	afterEach(() => {
-		rmSync(tempDir, { recursive: true, force: true });
-	});
+  afterEach(() => {
+    rmSync(tempDir, { recursive: true, force: true });
+  });
 
-	test("should create config file", () => {
-		execSync(`node ${cliPath} init`, { cwd: tempDir });
+  test("should create config file", () => {
+    execSync(`node ${cliPath} init`, { cwd: tempDir });
 
-		const configPath = join(tempDir, configFilename);
-		expect(existsSync(configPath)).toBe(true);
-	});
+    const configPath = join(tempDir, configFilename);
+    expect(existsSync(configPath)).toBe(true);
+  });
 
-	test("should write default content", () => {
-		const expected = `input: ./locales/en.json
+  test("should write default content", () => {
+    const expected = `input: ./locales/en.json
 output: ./src/generated
 overwrite: false
 `;
 
-		execSync(`node ${cliPath} init`, { cwd: tempDir });
+    execSync(`node ${cliPath} init`, { cwd: tempDir });
 
-		const configPath = join(tempDir, configFilename);
-		const content = readFileSync(configPath, "utf-8");
+    const configPath = join(tempDir, configFilename);
+    const content = readFileSync(configPath, "utf-8");
 
-		expect(content).toBe(expected);
-	});
+    expect(content).toBe(expected);
+  });
 });

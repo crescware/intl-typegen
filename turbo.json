@@ -4,7 +4,8 @@
 		"turbo:check": {
 			"dependsOn": [
 				"check:lint",
-				"check:types"
+				"check:types",
+				"test"
 			]
 		},
 		"check:lint": {

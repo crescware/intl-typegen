@@ -30,6 +30,8 @@
   },
   "type": "module",
   "dependencies": {
-    "commander": "^14.0.2"
+    "commander": "^14.0.2",
+    "valibot": "^1.2.0",
+    "yaml": "^2.8.2"
   }
 }
