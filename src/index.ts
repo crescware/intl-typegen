@@ -1,9 +1,16 @@
 #!/usr/bin/env node
 
-import { existsSync, writeFileSync } from "node:fs";
-import { parseArgs } from "node:util";
+import { existsSync, readFileSync, writeFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { Command } from "commander";
 
 import { configFilename } from "./config-filename";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const packageJson = JSON.parse(readFileSync(join(__dirname, "..", "package.json"), "utf-8"));
+const version: string = packageJson.version;
 
 const DEFAULT_CONFIG = `input: ./locales/en.json
 output: ./src/generated
@@ -21,26 +28,19 @@ function init(): void {
 }
 
 function main(): void {
-	const { positionals } = parseArgs({
-		allowPositionals: true,
-	});
+	const program = new Command();
 
-	const command = positionals[0];
+	program
+		.name("intl-typegen")
+		.description("Generate TypeScript files from i18n JSON translation files")
+		.version(version);
 
-	switch (command) {
-		case "init":
-			init();
-			break;
-		case undefined:
-			console.error("Usage: intl-typegen <command>");
-			console.error("Commands:");
-			console.error("  init    Create config file");
-			process.exit(1);
-			break;
-		default:
-			console.error(`Unknown command: ${command}`);
-			process.exit(1);
-	}
+	program
+		.command("init")
+		.description("Create config file")
+		.action(init);
+
+	program.parse();
 }
 
 main();

@@ -28,5 +28,8 @@
     "format": "oxfmt --write src",
     "test": "vitest run"
   },
-  "type": "module"
+  "type": "module",
+  "dependencies": {
+    "commander": "^14.0.2"
+  }
 }
