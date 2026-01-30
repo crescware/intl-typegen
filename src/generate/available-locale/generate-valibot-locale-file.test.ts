@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { generateValibotLocaleFile } from "./generate-valibot-locale-file";
 
 describe("generateValibotLocaleFile()", () => {
-  it("generates valibot locale file", () => {
-    const result = generateValibotLocaleFile(["en-US", "ja-JP"], "availableLocale", "{name}Schema");
+  test("generates valibot locale file", () => {
+    const result = generateValibotLocaleFile(["en-US", "ja-JP"], {
+      name: "availableLocale",
+      variableNameConvention: "{name}Schema",
+    });
 
     expect(result).toBe(
       [

@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { generateZodLocaleFile } from "./generate-zod-locale-file";
 
 describe("generateZodLocaleFile()", () => {
-  it("generates zod locale file", () => {
-    const result = generateZodLocaleFile(["en-US", "ja-JP"], "availableLocale", "{name}Schema");
+  test("generates zod locale file", () => {
+    const result = generateZodLocaleFile(["en-US", "ja-JP"], {
+      name: "availableLocale",
+      variableNameConvention: "{name}Schema",
+    });
 
     expect(result).toBe(
       [

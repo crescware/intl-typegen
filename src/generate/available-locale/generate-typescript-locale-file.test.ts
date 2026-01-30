@@ -1,10 +1,13 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 
 import { generateTypescriptLocaleFile } from "./generate-typescript-locale-file";
 
 describe("generateTypescriptLocaleFile()", () => {
-  it("generates with default convention", () => {
-    const result = generateTypescriptLocaleFile(["en-US", "ja-JP"], "availableLocale", "{name}");
+  test("generates with default convention", () => {
+    const result = generateTypescriptLocaleFile(["en-US", "ja-JP"], {
+      name: "availableLocale",
+      variableNameConvention: "{name}",
+    });
 
     expect(result).toBe(
       [
@@ -19,12 +22,11 @@ describe("generateTypescriptLocaleFile()", () => {
     );
   });
 
-  it("generates with Schema suffix convention", () => {
-    const result = generateTypescriptLocaleFile(
-      ["en-US", "ja-JP"],
-      "availableLocale",
-      "{name}Schema",
-    );
+  test("generates with Schema suffix convention", () => {
+    const result = generateTypescriptLocaleFile(["en-US", "ja-JP"], {
+      name: "availableLocale",
+      variableNameConvention: "{name}Schema",
+    });
 
     expect(result).toBe(
       [
@@ -39,12 +41,11 @@ describe("generateTypescriptLocaleFile()", () => {
     );
   });
 
-  it("generates with schemaOf prefix convention", () => {
-    const result = generateTypescriptLocaleFile(
-      ["en-US", "ja-JP"],
-      "availableLocale",
-      "schemaOf{name}",
-    );
+  test("generates with schemaOf prefix convention", () => {
+    const result = generateTypescriptLocaleFile(["en-US", "ja-JP"], {
+      name: "availableLocale",
+      variableNameConvention: "schemaOf{name}",
+    });
 
     expect(result).toBe(
       [

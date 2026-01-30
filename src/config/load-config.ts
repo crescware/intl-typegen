@@ -1,10 +1,15 @@
 import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { ValiError, parse } from "valibot";
+import { type InferOutput, ValiError, parse } from "valibot";
 import { parse as parseYaml } from "yaml";
 
 import { UsageError } from "../errors/usage-error";
-import { type Config, configSchema } from "./config";
+import {
+  type AvailableLocaleConfig,
+  availableLocaleConfigDefaults,
+  type Config,
+  configSchema,
+} from "./config";
 import { configFilename } from "./config-filename";
 
 export function loadConfig(): Config {
@@ -28,7 +33,7 @@ export function loadConfig(): Config {
     throw e;
   }
 
-  let config: Config;
+  let config: InferOutput<typeof configSchema>;
   try {
     config = parse(configSchema, rawConfig);
   } catch (e) {
@@ -40,9 +45,18 @@ export function loadConfig(): Config {
 
   const configDir = dirname(resolve(configFilename));
 
+  const availableLocale = {
+    declaration: config.availableLocale?.declaration ?? availableLocaleConfigDefaults.declaration,
+    name: config.availableLocale?.name ?? availableLocaleConfigDefaults.name,
+    variableNameConvention:
+      config.availableLocale?.variableNameConvention ??
+      availableLocaleConfigDefaults.variableNameConvention,
+  } satisfies AvailableLocaleConfig;
+
   return {
     ...config,
     input: resolve(configDir, config.input),
     output: resolve(configDir, config.output),
+    availableLocale: availableLocale,
   };
 }

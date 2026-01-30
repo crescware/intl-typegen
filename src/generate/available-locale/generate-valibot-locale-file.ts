@@ -1,11 +1,12 @@
 import { pascalCase } from "scule";
 
+import type { AvailableLocaleConfig } from "../../config/config";
+
 import { applyVariableNameConvention } from "./apply-variable-name-convention";
 
 export function generateValibotLocaleFile(
   locales: string[],
-  collectionName: string,
-  variableNameConvention: string,
+  { name, variableNameConvention }: Pick<AvailableLocaleConfig, "name" | "variableNameConvention">,
 ): string {
   const lines: string[] = [];
 
@@ -19,14 +20,14 @@ export function generateValibotLocaleFile(
 
   lines.push("");
 
-  const collectionVarName = applyVariableNameConvention(variableNameConvention, collectionName);
+  const collectionVarName = applyVariableNameConvention(variableNameConvention, name);
   const localeVarNames = locales.map((l) => applyVariableNameConvention(variableNameConvention, l));
   const literals = localeVarNames.map((v) => `${v}.literal`).join(", ");
   lines.push(`export const ${collectionVarName} = picklist([${literals}]);`);
 
   lines.push("");
 
-  const typeName = pascalCase(collectionName);
+  const typeName = pascalCase(name);
   lines.push(`export type ${typeName} = InferOutput<typeof ${collectionVarName}>;`);
 
   return lines.join("\n") + "\n";

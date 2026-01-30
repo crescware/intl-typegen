@@ -1,20 +1,22 @@
 import type { AvailableLocaleConfig } from "../../config/config";
 
+import { PreconditionError } from "../../errors/precondition-error";
 import { generateTypescriptLocaleFile } from "./generate-typescript-locale-file";
 import { generateValibotLocaleFile } from "./generate-valibot-locale-file";
 import { generateZodLocaleFile } from "./generate-zod-locale-file";
 
 export function generateLocaleFile(locales: string[], config: AvailableLocaleConfig): string {
-  const { declaration, name, variableNameConvention } = config;
-
-  switch (declaration) {
+  switch (config.declaration) {
     case "typescript":
-      return generateTypescriptLocaleFile(locales, name, variableNameConvention);
+      return generateTypescriptLocaleFile(locales, config);
+
     case "valibot":
-      return generateValibotLocaleFile(locales, name, variableNameConvention);
+      return generateValibotLocaleFile(locales, config);
+
     case "zod":
-      return generateZodLocaleFile(locales, name, variableNameConvention);
+      return generateZodLocaleFile(locales, config);
+
     default:
-      return generateTypescriptLocaleFile(locales, name, variableNameConvention);
+      throw new PreconditionError(`Unknown declaration: ${config.declaration}`);
   }
 }
