@@ -12,6 +12,14 @@ Two error types with distinct responsibilities:
 
 **`PreconditionError`** (`src/errors/precondition-error.ts`) - Internal programming errors. Calling code violated an API contract. Indicates a bug in our implementation.
 
+### Error Handling Patterns
+
+- Use `{ cause: e }` to preserve the original error chain
+- Don't duplicate error messages in the message string - the cause contains the details
+- Use `if (e instanceof Error)` pattern, not ternary operators
+- If `e` is not an Error instance, just `throw e` - don't try to wrap anomalies
+- Use `[...].join("\n")` for multi-line messages
+
 ---
 
 ## Overview
@@ -197,29 +205,6 @@ intl-typegen -V            # Show version
    - Recursively generate type definition from nested structure
    - Generate TypeScript content (exported type + exported function)
 7. **Write output files** to specified directory
-
-### Error Handling
-
-**Non-existent paths:**
-- Input directory not found: Exit with error message including the path
-- Input directory contains no JSON files: Exit with error message
-- Output directory not found: Create it recursively (like `mkdir -p`)
-
-**Duplicate keys:**
-- Same top-level key exists in multiple JSON files: Exit with error message listing the conflicting files
-
-**Malformed files:**
-- Invalid JSON in input file: Exit with error message including parse error details
-- Invalid YAML in config file: Exit with error message including parse error details
-- Schema validation failure: Exit with error message listing validation errors
-- Top-level value is not an object: Exit with error message (primitives and arrays not supported at top level)
-
-**Invalid configuration:**
-- `availableLocale.variableNameConvention` missing `{name}` placeholder: Exit with error message
-
-**File write failures:**
-- Permission denied: Exit with error message including the path
-- Disk full or I/O error: Exit with error message including system error details
 
 ## Decisions Made
 
