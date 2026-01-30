@@ -29,7 +29,7 @@ describe("init", () => {
   });
 
   test("should write default content", () => {
-    const expected = `input: ./locales
+    const expected = `input: ./messages
 output: ./src/generated
 overwrite: false
 `;

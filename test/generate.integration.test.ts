@@ -46,7 +46,7 @@ describe("generate", () => {
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
       const expected = readFileSync(join(tempDir, "expected", "use-bbb-translation.ts"), "utf-8");
-      const actual = readFileSync(join(tempDir, "output", "use-bbb-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "generated", "types", "use-bbb-translation.ts"), "utf-8");
       expect(actual).toBe(expected);
     });
   });
