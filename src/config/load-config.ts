@@ -1,4 +1,5 @@
 import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
 import { parse } from "valibot";
 import { parse as parseYaml } from "yaml";
 
@@ -13,5 +14,13 @@ export function loadConfig(): Config {
     );
   }
   const content = readFileSync(configFilename, "utf-8");
-  return parse(configSchema, parseYaml(content));
+  const config = parse(configSchema, parseYaml(content));
+
+  const configDir = dirname(resolve(configFilename));
+
+  return {
+    ...config,
+    input: resolve(configDir, config.input),
+    output: resolve(configDir, config.output),
+  };
 }
