@@ -121,60 +121,11 @@ Before generating files, detect and report collisions:
 
 ### Dependencies
 
-**Runtime:**
-- `commander` - CLI argument parsing
-- `scule` - Case conversion (kebabCase, pascalCase)
-- `valibot` - Schema validation
-- `yaml` - YAML parsing for config file
-
-**Development:**
-- `@typescript/native-preview` - Type checking (tsgo)
-- `tsup` - Build/bundle for distribution
-- `vitest` - Testing
+See `package.json` for the current dependencies.
 
 ### File Structure
-```
-src/
-  config/
-    config.ts             # Config schema definition
-    config-filename.ts    # Config filename constant
-    init.ts               # Init command
-    load-config.ts        # Load and parse config file
-  generate/
-    generate.ts           # Generate command
-    generate-file.ts      # Generate TypeScript file content
-    generate-type-body.ts # Generate type body string
-    generate-locale-file.ts # Generate available-locale.ts content
-    get-output-filename.ts # Generate output filename
-    infer-type.ts         # Infer TypeScript type from JSON value
-    input.ts              # Input schema definition
-    json-value.ts         # JSON value type and schema
-    sanitize-identifier.ts # Sanitize keys to valid TypeScript identifiers
-    detect-collision.ts   # Detect filename collisions
-  precondition-error.ts   # Custom error class
-  index.ts                # CLI entry point
-test/
-  fixtures/               # Test fixtures
-    basic/
-    nested/
-    types/
-    overwrite-false/
-    invalid-json/
-    invalid-yaml/
-    collision/
-    duplicate-keys/
-    empty-directory/
-    top-level-primitive/
-  unit/
-    infer-type.test.ts
-    generate-type-body.test.ts
-    generate-locale-file.test.ts
-    get-output-filename.test.ts
-    sanitize-identifier.test.ts
-    detect-collision.test.ts
-  generate.integration.test.ts
-  error-cases.integration.test.ts
-```
+
+See the codebase for the current file structure.
 
 ### Configuration File
 
@@ -266,35 +217,7 @@ intl-typegen -V            # Show version
 
 ## Build & Development
 
-**Type checking:**
-```bash
-pnpm check:types
-```
-
-**Lint:**
-```bash
-pnpm check:lint
-```
-
-**Test:**
-```bash
-pnpm test
-```
-
-**All checks:**
-```bash
-pnpm check
-```
-
-**Format:**
-```bash
-pnpm format
-```
-
-**Build for distribution:**
-```bash
-pnpm build
-```
+See `package.json` scripts.
 
 ## Verification
 
