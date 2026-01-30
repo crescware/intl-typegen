@@ -3,7 +3,9 @@ import { join } from "node:path";
 import { parse } from "valibot";
 
 import { loadConfig } from "../config/load-config";
-import { generateFile, getOutputFilename, inputSchema } from "./generator";
+import { generateFile } from "./generate-file";
+import { getOutputFilename } from "./get-output-filename";
+import { inputSchema } from "./input";
 
 export function generate(): void {
   const config = loadConfig();
