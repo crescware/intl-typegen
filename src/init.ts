@@ -9,8 +9,7 @@ overwrite: false
 
 export function init(): void {
   if (existsSync(configFilename)) {
-    console.error(`Error: ${configFilename} already exists`);
-    process.exit(1);
+    throw new Error(`${configFilename} already exists`);
   }
 
   writeFileSync(configFilename, defaultConfig);
