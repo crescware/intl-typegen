@@ -2,8 +2,8 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { parse } from "valibot";
 
+import { loadConfig } from "../config/load-config";
 import { generateFile, getOutputFilename, inputSchema } from "./generator";
-import { loadConfig } from "./load-config";
 
 export function generate(): void {
   const config = loadConfig();

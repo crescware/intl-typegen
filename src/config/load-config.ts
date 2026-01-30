@@ -2,9 +2,9 @@ import { existsSync, readFileSync } from "node:fs";
 import { parse } from "valibot";
 import { parse as parseYaml } from "yaml";
 
+import { PreconditionError } from "../precondition-error";
 import { type Config, configSchema } from "./config";
 import { configFilename } from "./config-filename";
-import { PreconditionError } from "./precondition-error";
 
 export function loadConfig(): Config {
   if (!existsSync(configFilename)) {
