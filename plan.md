@@ -2,93 +2,15 @@
 
 **After completing any implementation work, run:** `pnpm format && pnpm build && pnpm check`
 
-## Immediate Tasks: Error Handling
+**When moving files, use `git mv` to preserve history.**
 
-### Error Classification
+## Error Classification
 
 Two error types with distinct responsibilities:
 
-**`UsageError`** - User-correctable errors. The user can take action to fix the problem.
-- Config file not found
-- Invalid YAML syntax in config
-- Schema validation failure
-- Input directory not found
-- No JSON files in input directory
-- Invalid JSON in input file
-- Top-level value is not an object
-- Duplicate top-level keys across files
-- Invalid `variableNameConvention` (missing `{name}`)
-- Key collision (different keys produce same filename)
-- File write failures (permission denied → fix permissions or change output path; disk full → free space)
+**`UsageError`** (`src/errors/usage-error.ts`) - User-correctable errors. The user can take action to fix the problem.
 
-**`PreconditionError`** - Internal programming errors. Calling code violated an API contract. Indicates a bug in our implementation.
-- Function received invalid arguments that should never occur if code is correct
-- Invariant violations
-
-### 1. Create `UsageError` class (`src/usage-error.ts`)
-
-```typescript
-export class UsageError extends Error {
-  name = "UsageError";
-
-  constructor(message: string) {
-    super(message);
-  }
-}
-```
-
-### 2. Migrate existing errors
-
-Replace `PreconditionError` with `UsageError` in:
-- `src/config/load-config.ts` - config file not found
-- `src/generate/load-input-directory.ts` - all current `PreconditionError` usages
-
-### 3. Add config loading error handling (`src/config/load-config.ts`)
-
-Wrap `parseYaml()` and valibot `parse()` in try-catch blocks:
-
-```typescript
-// Invalid YAML syntax
-let rawConfig: unknown;
-try {
-  rawConfig = parseYaml(content);
-} catch (error) {
-  throw new UsageError(
-    `Invalid YAML in config file: ${configFilename}\n${error instanceof Error ? error.message : String(error)}`,
-  );
-}
-
-// Schema validation failure
-try {
-  const config = parse(configSchema, rawConfig);
-} catch (error) {
-  throw new UsageError(
-    `Invalid config: ${error instanceof ValiError ? error.issues.map((i) => i.message).join(", ") : String(error)}`,
-  );
-}
-```
-
-### 4. File write errors (`src/generate/generate.ts`)
-
-Wrap `writeFileSync()` in try-catch and throw `UsageError`:
-
-```typescript
-try {
-  writeFileSync(filepath, content);
-} catch (error) {
-  throw new UsageError(
-    `Failed to write file: ${filepath}\n${error instanceof Error ? error.message : String(error)}`,
-  );
-}
-```
-
-### 5. Test Coverage
-
-Add tests for:
-- Invalid YAML syntax in config file → `UsageError`
-- Missing required fields in config (schema validation) → `UsageError`
-- File write failure (mock `writeFileSync` to throw) → `UsageError`
-- Verify existing error cases throw `UsageError`, not `PreconditionError`
+**`PreconditionError`** (`src/errors/precondition-error.ts`) - Internal programming errors. Calling code violated an API contract. Indicates a bug in our implementation.
 
 ---
 

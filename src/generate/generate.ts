@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
 import { loadConfig } from "../config/load-config";
+import { UsageError } from "../errors/usage-error";
 import { generateFile } from "./generate-file";
 import { getOutputFilename } from "./get-output-filename";
 import { loadInputDirectory } from "./load-input-directory";
@@ -11,7 +12,13 @@ export function generate(): void {
   const { data: json } = loadInputDirectory(config.input);
 
   if (!existsSync(config.output)) {
-    mkdirSync(config.output, { recursive: true });
+    try {
+      mkdirSync(config.output, { recursive: true });
+    } catch (e) {
+      throw new UsageError(
+        `Failed to create output directory: ${config.output}\n${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
   }
 
   for (const [key, value] of Object.entries(json)) {
@@ -24,7 +31,13 @@ export function generate(): void {
     }
 
     const content = generateFile(key, value);
-    writeFileSync(filepath, content);
+    try {
+      writeFileSync(filepath, content);
+    } catch (e) {
+      throw new UsageError(
+        `Failed to write file: ${filepath}\n${e instanceof Error ? e.message : String(e)}`,
+      );
+    }
     console.log(`Generated ${filename}`);
   }
 }

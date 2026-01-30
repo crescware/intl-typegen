@@ -1,5 +1,6 @@
 import { existsSync, writeFileSync } from "node:fs";
 
+import { UsageError } from "../errors/usage-error";
 import { configFilename } from "./config-filename";
 
 const defaultConfig = `input: ./messages
@@ -9,9 +10,15 @@ overwrite: false
 
 export function init(): void {
   if (existsSync(configFilename)) {
-    throw new Error(`${configFilename} already exists`);
+    throw new UsageError(`${configFilename} already exists`);
   }
 
-  writeFileSync(configFilename, defaultConfig);
+  try {
+    writeFileSync(configFilename, defaultConfig);
+  } catch (e) {
+    throw new UsageError(
+      `Failed to write config file: ${configFilename}\n${e instanceof Error ? e.message : String(e)}`,
+    );
+  }
   console.log(`Created ${configFilename}`);
 }
