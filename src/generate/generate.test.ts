@@ -1,5 +1,13 @@
 import { execSync } from "node:child_process";
-import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import {
+  cpSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { packageDirectorySync } from "package-directory";
@@ -164,6 +172,30 @@ describe("generate()", () => {
 
       // Verify no files were written
       expect(existsSync(join(tempDir, "output"))).toBe(false);
+    });
+  });
+
+  describe("error cases", () => {
+    test("should throw UsageError when variableNameConvention is missing {name} placeholder", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ test: { key: "value" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        [
+          "input: ./messages",
+          "output: ./output",
+          "overwrite: false",
+          "availableLocale:",
+          "  variableNameConvention: schema",
+        ].join("\n"),
+      );
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow('variableNameConvention: "schema"');
     });
   });
 });

@@ -53,6 +53,15 @@ export function loadConfig(): Config {
       availableLocaleConfigDefaults.variableNameConvention,
   } satisfies AvailableLocaleConfig;
 
+  if (!availableLocale.variableNameConvention.includes("{name}")) {
+    throw new UsageError(
+      [
+        `Invalid availableLocale.variableNameConvention: "${availableLocale.variableNameConvention}"`,
+        'The convention must contain the "{name}" placeholder.',
+      ].join("\n"),
+    );
+  }
+
   return {
     ...config,
     input: resolve(configDir, config.input),
