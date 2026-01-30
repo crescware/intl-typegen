@@ -219,8 +219,8 @@ describe("generate()", () => {
       const actual = readFileSync(join(tempDir, "output", "use-kebab-translation.ts"), "utf-8");
       const expected = [
         "export type KebabDictionary = {",
-        "\tfoo-bar: string;",
-        "\thello-world: string;",
+        `\t"foo-bar": string;`,
+        `\t"hello-world": string;`,
         "}",
         "",
         "export function useKebabTranslation() { /* TODO */ }",
@@ -245,8 +245,8 @@ describe("generate()", () => {
       const actual = readFileSync(join(tempDir, "output", "use-numeric-translation.ts"), "utf-8");
       const expected = [
         "export type NumericDictionary = {",
-        "\t123key: string;",
-        "\t456test: string;",
+        `\t"123key": string;`,
+        `\t"456test": string;`,
         "}",
         "",
         "export function useNumericTranslation() { /* TODO */ }",
