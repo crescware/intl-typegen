@@ -10,7 +10,9 @@ import { configFilename } from "./config-filename";
 export function loadConfig(): Config {
   if (!existsSync(configFilename)) {
     throw new UsageError(
-      `Config file not found: ${configFilename}\nRun 'intl-typegen init' to create one.`,
+      [`Config file not found: ${configFilename}`, "Run 'intl-typegen init' to create one."].join(
+        "\n",
+      ),
     );
   }
 
@@ -21,7 +23,7 @@ export function loadConfig(): Config {
     rawConfig = parseYaml(content);
   } catch (e) {
     if (e instanceof Error) {
-      throw new UsageError(`Invalid YAML in config file: ${configFilename}\n${e.message}`);
+      throw new UsageError(`Invalid YAML in config file: ${configFilename}`, { cause: e });
     }
     throw e;
   }
@@ -31,8 +33,7 @@ export function loadConfig(): Config {
     config = parse(configSchema, rawConfig);
   } catch (e) {
     if (e instanceof ValiError) {
-      const messages = e.issues.map((issue) => issue.message).join(", ");
-      throw new UsageError(`Invalid config: ${messages}`);
+      throw new UsageError(`Invalid config: ${configFilename}`, { cause: e });
     }
     throw e;
   }

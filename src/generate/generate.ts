@@ -16,7 +16,7 @@ export function generate(): void {
       mkdirSync(config.output, { recursive: true });
     } catch (e) {
       if (e instanceof Error) {
-        throw new UsageError(`Failed to create output directory: ${config.output}\n${e.message}`);
+        throw new UsageError(`Failed to create output directory: ${config.output}`, { cause: e });
       }
       throw e;
     }
@@ -36,7 +36,7 @@ export function generate(): void {
       writeFileSync(filepath, content);
     } catch (e) {
       if (e instanceof Error) {
-        throw new UsageError(`Failed to write file: ${filepath}\n${e.message}`);
+        throw new UsageError(`Failed to write file: ${filepath}`, { cause: e });
       }
       throw e;
     }

@@ -17,7 +17,7 @@ export function init(): void {
     writeFileSync(configFilename, defaultConfig);
   } catch (e) {
     if (e instanceof Error) {
-      throw new UsageError(`Failed to write config file: ${configFilename}\n${e.message}`);
+      throw new UsageError(`Failed to write config file: ${configFilename}`, { cause: e });
     }
     throw e;
   }

@@ -4,7 +4,7 @@
 export class UsageError extends Error {
   name = "UsageError";
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
   }
 }

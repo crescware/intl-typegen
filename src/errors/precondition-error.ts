@@ -4,7 +4,7 @@
 export class PreconditionError extends Error {
   name = "PreconditionError";
 
-  constructor(message: string) {
-    super(message);
+  constructor(message: string, options?: ErrorOptions) {
+    super(message, options);
   }
 }
