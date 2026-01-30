@@ -1,0 +1,10 @@
+{
+  "mixed": {
+    "str": "hello",
+    "num": 42,
+    "bool": true,
+    "nullable": null,
+    "arr": ["a", "b", "c"],
+    "emptyArr": []
+  }
+}

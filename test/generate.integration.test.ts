@@ -1,0 +1,82 @@
+import { execSync } from "node:child_process";
+import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+const cliPath = join(__dirname, "..", "dist", "index.js");
+const fixturesPath = join(__dirname, "fixtures");
+
+describe("generate", () => {
+  let tempDir: string;
+
+  beforeEach(() => {
+    tempDir = mkdtempSync(join(tmpdir(), "intl-typegen-test-"));
+  });
+
+  afterEach(() => {
+    rmSync(tempDir, { recursive: true, force: true });
+  });
+
+  describe("basic", () => {
+    test("should generate files for flat key-value pairs", () => {
+      const fixturePath = join(fixturesPath, "basic");
+      cpSync(fixturePath, tempDir, { recursive: true });
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const expectedAaa = readFileSync(join(tempDir, "expected", "use-aaa-translation.ts"), "utf-8");
+      const actualAaa = readFileSync(join(tempDir, "output", "use-aaa-translation.ts"), "utf-8");
+      expect(actualAaa).toBe(expectedAaa);
+
+      const expectedFooBar = readFileSync(join(tempDir, "expected", "use-foo-bar-translation.ts"), "utf-8");
+      const actualFooBar = readFileSync(join(tempDir, "output", "use-foo-bar-translation.ts"), "utf-8");
+      expect(actualFooBar).toBe(expectedFooBar);
+    });
+  });
+
+  describe("nested", () => {
+    test("should generate nested type definitions", () => {
+      const fixturePath = join(fixturesPath, "nested");
+      cpSync(fixturePath, tempDir, { recursive: true });
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const expected = readFileSync(join(tempDir, "expected", "use-bbb-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-bbb-translation.ts"), "utf-8");
+      expect(actual).toBe(expected);
+    });
+  });
+
+  describe("types", () => {
+    test("should infer correct types for various values", () => {
+      const fixturePath = join(fixturesPath, "types");
+      cpSync(fixturePath, tempDir, { recursive: true });
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const expected = readFileSync(join(tempDir, "expected", "use-mixed-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-mixed-translation.ts"), "utf-8");
+      expect(actual).toBe(expected);
+    });
+  });
+
+  describe("overwrite-false", () => {
+    test("should skip existing files when overwrite is false", () => {
+      const fixturePath = join(fixturesPath, "overwrite-false");
+      cpSync(fixturePath, tempDir, { recursive: true });
+
+      const existingContent = readFileSync(join(tempDir, "existing", "use-aaa-translation.ts"), "utf-8");
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const afterContent = readFileSync(join(tempDir, "existing", "use-aaa-translation.ts"), "utf-8");
+      expect(afterContent).toBe(existingContent);
+
+      expect(existsSync(join(tempDir, "existing", "use-bbb-translation.ts"))).toBe(true);
+    });
+  });
+});

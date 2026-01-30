@@ -5,6 +5,7 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
+import { generate } from "./generate";
 import { init } from "./init";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,10 @@ function main(): void {
     .version(version);
 
   program.command("init").description("Create config file").action(init);
+  program
+    .command("generate", { isDefault: true })
+    .description("Generate TypeScript files")
+    .action(generate);
 
   program.parse();
 }
