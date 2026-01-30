@@ -7,7 +7,7 @@ CLI tool that generates TypeScript files from i18n JSON translation files. Each 
 
 **Input directory structure:**
 ```
-locales/
+messages/
   ja-JP.json
   en-US.json
 ```
@@ -178,7 +178,7 @@ test/
 
 `intl-typegen.config.yaml`:
 ```yaml
-input: ./locales
+input: ./messages
 output: ./src/generated
 overwrite: true
 availableLocale:
@@ -190,6 +190,8 @@ availableLocale:
 - `input` - Path to directory containing JSON files (required). All `.json` files in the directory are processed.
 - `output` - Output directory (required)
 - `overwrite` - If `true`, overwrite existing files silently. If `false`, skip existing files with a warning.
+
+**Path resolution:** All paths (`input`, `output`) are resolved relative to the config file location, not the working directory.
 - `availableLocale` - Settings for `available-locale.ts` generation
   - `declaration` - Output format: `"typescript"` | `"valibot"` | `"zod"` (default: `"typescript"`)
   - `name` - Base name for the collection variable and type (default: `availableLocale`)
