@@ -3,8 +3,8 @@ import { join } from "node:path";
 
 import { loadConfig } from "../config/load-config";
 import { UsageError } from "../errors/usage-error";
-import { generateFile } from "./generate-file";
-import { generateLocaleFile } from "./generate-locale-file";
+import { generateLocaleFile } from "./available-locale/generate-locale-file";
+import { generateFile } from "./translation/generate-file";
 import { getOutputFilename } from "./get-output-filename";
 import { loadInputDirectory } from "./load-input-directory";
 

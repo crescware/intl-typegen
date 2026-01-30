@@ -1,4 +1,4 @@
-import type { AvailableLocaleConfig } from "../config/config";
+import type { AvailableLocaleConfig } from "../../config/config";
 
 import { generateTypescriptLocaleFile } from "./generate-typescript-locale-file";
 import { generateValibotLocaleFile } from "./generate-valibot-locale-file";
