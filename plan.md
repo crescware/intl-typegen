@@ -8,30 +8,12 @@
 
 ## Remaining Features
 
-### 1. Identifier Sanitization (`src/generate/sanitize-identifier.ts`)
-
-Sanitize JSON keys to produce valid TypeScript identifiers:
-
-- Keys starting with a digit: prefix with underscore (`123key` → `_123key`)
-- Keys containing invalid characters (hyphens, spaces, etc.): replace with underscores (`foo-bar` → `foo_bar`)
-- TypeScript reserved words: prefix with underscore (`class` → `_class`)
-
-**TypeScript reserved words to handle:**
-`break`, `case`, `catch`, `class`, `const`, `continue`, `debugger`, `default`, `delete`, `do`, `else`, `enum`, `export`, `extends`, `false`, `finally`, `for`, `function`, `if`, `import`, `in`, `instanceof`, `new`, `null`, `return`, `super`, `switch`, `this`, `throw`, `true`, `try`, `typeof`, `var`, `void`, `while`, `with`, `yield`, `let`, `static`, `implements`, `interface`, `package`, `private`, `protected`, `public`
-
-### 2. Collision Detection (`src/generate/detect-collisions.ts`)
+### 1. Collision Detection (`src/generate/detect-collisions.ts`)
 
 Before generating files, detect when two keys produce the same filename after case conversion:
 
 - Exit with error listing the conflicting keys
 - Example: `fooBar` and `foo-bar` both become `use-foo-bar-translation.ts` → error
-
-### 3. Validate `variableNameConvention` (`src/config/load-config.ts`)
-
-After loading the config, validate that `availableLocale.variableNameConvention` contains the `{name}` placeholder:
-
-- Throw `UsageError` if `{name}` is missing
-- Example: `"schema"` → error (missing `{name}`), `"{name}Schema"` → valid
 
 ---
 
@@ -45,7 +27,6 @@ After loading the config, validate that `availableLocale.variableNameConvention`
 | `src/generate/translation/generate-type-body.test.ts` | Type body generation for flat and nested structures |
 | `src/generate/get-output-filename.test.ts` | Filename generation and case conversion |
 | `src/generate/available-locale/apply-variable-name-convention.test.ts` | Variable name convention logic |
-| `src/generate/sanitize-identifier.test.ts` | Identifier sanitization (after feature implemented) |
 | `src/generate/detect-collisions.test.ts` | Collision detection (after feature implemented) |
 
 ### Error Case Tests
@@ -56,11 +37,10 @@ After loading the config, validate that `availableLocale.variableNameConvention`
 4. Invalid JSON in input file
 5. Invalid YAML in config file
 6. Schema validation failure (missing required fields)
-7. Invalid `availableLocale.variableNameConvention` (missing `{name}` placeholder)
+7. ~~Invalid `availableLocale.variableNameConvention` (missing `{name}` placeholder)~~ Done
 8. Top-level value is not an object (primitive or array)
 9. Duplicate top-level keys across files
 10. Key collision detection (same output filename)
-11. Invalid identifier sanitization
 
 ---
 

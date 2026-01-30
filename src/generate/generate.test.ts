@@ -175,6 +175,87 @@ describe("generate()", () => {
     });
   });
 
+  describe("special keys", () => {
+    test("should handle reserved words as JSON keys", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ reserved: { class: "value", function: "value", if: "value" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-reserved-translation.ts"), "utf-8");
+      const expected = [
+        "export type ReservedDictionary = {",
+        "\tclass: string;",
+        "\tfunction: string;",
+        "\tif: string;",
+        "}",
+        "",
+        "export function useReservedTranslation() { /* TODO */ }",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should handle kebab-case keys", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ kebab: { "foo-bar": "value", "hello-world": "value" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-kebab-translation.ts"), "utf-8");
+      const expected = [
+        "export type KebabDictionary = {",
+        "\tfoo-bar: string;",
+        "\thello-world: string;",
+        "}",
+        "",
+        "export function useKebabTranslation() { /* TODO */ }",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should handle keys starting with numbers", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ numeric: { "123key": "value", "456test": "value" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-numeric-translation.ts"), "utf-8");
+      const expected = [
+        "export type NumericDictionary = {",
+        "\t123key: string;",
+        "\t456test: string;",
+        "}",
+        "",
+        "export function useNumericTranslation() { /* TODO */ }",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+  });
+
   describe("error cases", () => {
     test("should throw UsageError when variableNameConvention is missing {name} placeholder", () => {
       mkdirSync(join(tempDir, "messages"));
