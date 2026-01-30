@@ -278,5 +278,96 @@ describe("generate()", () => {
         execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
       }).toThrow('variableNameConvention: "schema"');
     });
+
+    test("should throw UsageError when input directory not found", () => {
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./nonexistent", "output: ./output", "overwrite: false"].join("\n"),
+      );
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Input directory not found");
+    });
+
+    test("should throw UsageError when input directory contains no JSON files", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: false"].join("\n"),
+      );
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("contains no JSON files");
+    });
+
+    test("should throw UsageError when config file not found", () => {
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Config file not found");
+    });
+
+    test("should throw UsageError when input file contains invalid JSON", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(join(tempDir, "messages", "en.json"), "{ invalid json }");
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: false"].join("\n"),
+      );
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Invalid JSON");
+    });
+
+    test("should throw UsageError when config file contains invalid YAML", () => {
+      writeFileSync(join(tempDir, "intl-typegen.config.yaml"), "invalid: yaml: syntax:");
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Invalid YAML");
+    });
+
+    test("should throw UsageError when config is missing required fields", () => {
+      writeFileSync(join(tempDir, "intl-typegen.config.yaml"), "input: ./messages");
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Invalid config");
+    });
+
+    test("should throw UsageError when top-level value is not an object", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(join(tempDir, "messages", "en.json"), JSON.stringify({ test: "string value" }));
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: false"].join("\n"),
+      );
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Expected Object");
+    });
+
+    test("should throw UsageError when duplicate top-level keys exist across files", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ common: { key: "en" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja.json"),
+        JSON.stringify({ common: { key: "ja" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: false"].join("\n"),
+      );
+
+      expect(() => {
+        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
+      }).toThrow("Duplicate top-level key");
+    });
   });
 });

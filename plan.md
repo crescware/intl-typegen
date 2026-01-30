@@ -6,41 +6,9 @@
 
 ---
 
-## Remaining Features
+## Completed
 
-### 1. Collision Detection (`src/generate/detect-collisions.ts`)
-
-Before generating files, detect when two keys produce the same filename after case conversion:
-
-- Exit with error listing the conflicting keys
-- Example: `fooBar` and `foo-bar` both become `use-foo-bar-translation.ts` → error
-
----
-
-## Remaining Tests
-
-### Unit Tests (files do not exist)
-
-| File | Description |
-|------|-------------|
-| `src/generate/translation/infer-type.test.ts` | Type inference for all JSON value types |
-| `src/generate/translation/generate-type-body.test.ts` | Type body generation for flat and nested structures |
-| `src/generate/get-output-filename.test.ts` | Filename generation and case conversion |
-| `src/generate/available-locale/apply-variable-name-convention.test.ts` | Variable name convention logic |
-| `src/generate/detect-collisions.test.ts` | Collision detection (after feature implemented) |
-
-### Error Case Tests
-
-1. Input directory not found
-2. Input directory contains no JSON files
-3. Config file not found
-4. Invalid JSON in input file
-5. Invalid YAML in config file
-6. Schema validation failure (missing required fields)
-7. ~~Invalid `availableLocale.variableNameConvention` (missing `{name}` placeholder)~~ Done
-8. Top-level value is not an object (primitive or array)
-9. Duplicate top-level keys across files
-10. Key collision detection (same output filename)
+All features and tests have been implemented.
 
 ---
 
