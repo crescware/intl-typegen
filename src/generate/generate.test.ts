@@ -99,4 +99,71 @@ describe("generate()", () => {
       expect(existsSync(join(tempDir, "existing", "use-bbb-translation.ts"))).toBe(true);
     });
   });
+
+  describe("dry-run", () => {
+    test("should preview files without writing to disk", () => {
+      const fixturePath = join(fixturesPath, "basic");
+      cpSync(fixturePath, tempDir, { recursive: true });
+
+      const output = execSync(`node ${cliPath} generate --dry-run`, {
+        cwd: tempDir,
+        encoding: "utf-8",
+      });
+
+      const expected = [
+        "available-locale.ts",
+        "---",
+        'export const en = "en" as const;',
+        "",
+        "export const availableLocale = [en] as const;",
+        "",
+        "export type AvailableLocale = (typeof availableLocale)[number];",
+        "",
+        "use-aaa-translation.ts",
+        "---",
+        "export type AaaDictionary = {",
+        "\ta1: string;",
+        "\ta2: string;",
+        "}",
+        "",
+        "export function useAaaTranslation() { /* TODO */ }",
+        "",
+        "use-foo-bar-translation.ts",
+        "---",
+        "export type FooBarDictionary = {",
+        "\tfoo: string;",
+        "}",
+        "",
+        "export function useFooBarTranslation() { /* TODO */ }",
+        "",
+        "",
+      ].join("\n");
+
+      expect(output).toEqual(expected);
+
+      // Verify no files were written
+      expect(existsSync(join(tempDir, "output"))).toBe(false);
+    });
+
+    test("should work with -n short flag", () => {
+      const fixturePath = join(fixturesPath, "basic");
+      cpSync(fixturePath, tempDir, { recursive: true });
+
+      const outputLong = execSync(`node ${cliPath} generate --dry-run`, {
+        cwd: tempDir,
+        encoding: "utf-8",
+      });
+
+      const outputShort = execSync(`node ${cliPath} generate -n`, {
+        cwd: tempDir,
+        encoding: "utf-8",
+      });
+
+      // Same output as --dry-run
+      expect(outputShort).toEqual(outputLong);
+
+      // Verify no files were written
+      expect(existsSync(join(tempDir, "output"))).toBe(false);
+    });
+  });
 });

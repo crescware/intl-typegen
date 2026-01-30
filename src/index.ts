@@ -24,7 +24,8 @@ function main(): void {
   program
     .command("generate", { isDefault: true })
     .description("Generate TypeScript files")
-    .action(generate);
+    .option("-n, --dry-run", "Preview files without writing to disk")
+    .action((options: { dryRun?: boolean }) => generate({ dryRun: options.dryRun ?? false }));
 
   program.parse();
 }
