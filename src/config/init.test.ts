@@ -1,16 +1,18 @@
 import { execSync } from "node:child_process";
 import { existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
+import { join, resolve } from "node:path";
+import { packageDirectorySync } from "package-directory";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-import { configFilename } from "./config/config-filename";
+import { assertExists } from "../errors/assert-exists";
+import { configFilename } from "./config-filename";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const cliPath = join(__dirname, "..", "dist", "index.js");
+const packageRoot = packageDirectorySync();
+assertExists(packageRoot);
+const cliPath = resolve(packageRoot, "dist", "index.js");
 
-describe("init", () => {
+describe("init()", () => {
   let tempDir: string;
 
   beforeEach(() => {

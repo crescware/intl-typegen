@@ -1,16 +1,18 @@
 import { execSync } from "node:child_process";
 import { cpSync, existsSync, mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
+import { join, resolve } from "node:path";
+import { packageDirectorySync } from "package-directory";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const cliPath = join(__dirname, "..", "dist", "index.js");
-const fixturesPath = join(__dirname, "fixtures");
+import { assertExists } from "../errors/assert-exists";
 
-describe("generate", () => {
+const packageRoot = packageDirectorySync();
+assertExists(packageRoot);
+const cliPath = resolve(packageRoot, "dist", "index.js");
+const fixturesPath = resolve(packageRoot, "test", "fixtures");
+
+describe("generate()", () => {
   let tempDir: string;
 
   beforeEach(() => {
@@ -28,12 +30,21 @@ describe("generate", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const expectedAaa = readFileSync(join(tempDir, "expected", "use-aaa-translation.ts"), "utf-8");
+      const expectedAaa = readFileSync(
+        join(tempDir, "expected", "use-aaa-translation.ts"),
+        "utf-8",
+      );
       const actualAaa = readFileSync(join(tempDir, "output", "use-aaa-translation.ts"), "utf-8");
       expect(actualAaa).toBe(expectedAaa);
 
-      const expectedFooBar = readFileSync(join(tempDir, "expected", "use-foo-bar-translation.ts"), "utf-8");
-      const actualFooBar = readFileSync(join(tempDir, "output", "use-foo-bar-translation.ts"), "utf-8");
+      const expectedFooBar = readFileSync(
+        join(tempDir, "expected", "use-foo-bar-translation.ts"),
+        "utf-8",
+      );
+      const actualFooBar = readFileSync(
+        join(tempDir, "output", "use-foo-bar-translation.ts"),
+        "utf-8",
+      );
       expect(actualFooBar).toBe(expectedFooBar);
     });
   });
@@ -46,7 +57,10 @@ describe("generate", () => {
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
       const expected = readFileSync(join(tempDir, "expected", "use-bbb-translation.ts"), "utf-8");
-      const actual = readFileSync(join(tempDir, "generated", "types", "use-bbb-translation.ts"), "utf-8");
+      const actual = readFileSync(
+        join(tempDir, "generated", "types", "use-bbb-translation.ts"),
+        "utf-8",
+      );
       expect(actual).toBe(expected);
     });
   });
@@ -69,11 +83,17 @@ describe("generate", () => {
       const fixturePath = join(fixturesPath, "overwrite-false");
       cpSync(fixturePath, tempDir, { recursive: true });
 
-      const existingContent = readFileSync(join(tempDir, "existing", "use-aaa-translation.ts"), "utf-8");
+      const existingContent = readFileSync(
+        join(tempDir, "existing", "use-aaa-translation.ts"),
+        "utf-8",
+      );
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const afterContent = readFileSync(join(tempDir, "existing", "use-aaa-translation.ts"), "utf-8");
+      const afterContent = readFileSync(
+        join(tempDir, "existing", "use-aaa-translation.ts"),
+        "utf-8",
+      );
       expect(afterContent).toBe(existingContent);
 
       expect(existsSync(join(tempDir, "existing", "use-bbb-translation.ts"))).toBe(true);
