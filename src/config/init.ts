@@ -16,9 +16,11 @@ export function init(): void {
   try {
     writeFileSync(configFilename, defaultConfig);
   } catch (e) {
-    throw new UsageError(
-      `Failed to write config file: ${configFilename}\n${e instanceof Error ? e.message : String(e)}`,
-    );
+    if (e instanceof Error) {
+      throw new UsageError(`Failed to write config file: ${configFilename}\n${e.message}`);
+    }
+    throw e;
   }
+
   console.log(`Created ${configFilename}`);
 }

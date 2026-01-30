@@ -15,9 +15,10 @@ export function generate(): void {
     try {
       mkdirSync(config.output, { recursive: true });
     } catch (e) {
-      throw new UsageError(
-        `Failed to create output directory: ${config.output}\n${e instanceof Error ? e.message : String(e)}`,
-      );
+      if (e instanceof Error) {
+        throw new UsageError(`Failed to create output directory: ${config.output}\n${e.message}`);
+      }
+      throw e;
     }
   }
 
@@ -34,10 +35,12 @@ export function generate(): void {
     try {
       writeFileSync(filepath, content);
     } catch (e) {
-      throw new UsageError(
-        `Failed to write file: ${filepath}\n${e instanceof Error ? e.message : String(e)}`,
-      );
+      if (e instanceof Error) {
+        throw new UsageError(`Failed to write file: ${filepath}\n${e.message}`);
+      }
+      throw e;
     }
+
     console.log(`Generated ${filename}`);
   }
 }

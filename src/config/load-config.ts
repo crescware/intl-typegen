@@ -13,15 +13,17 @@ export function loadConfig(): Config {
       `Config file not found: ${configFilename}\nRun 'intl-typegen init' to create one.`,
     );
   }
+
   const content = readFileSync(configFilename, "utf-8");
 
   let rawConfig: unknown;
   try {
     rawConfig = parseYaml(content);
   } catch (e) {
-    throw new UsageError(
-      `Invalid YAML in config file: ${configFilename}\n${e instanceof Error ? e.message : String(e)}`,
-    );
+    if (e instanceof Error) {
+      throw new UsageError(`Invalid YAML in config file: ${configFilename}\n${e.message}`);
+    }
+    throw e;
   }
 
   let config: Config;
