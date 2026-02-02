@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 
 import { extractRichTags } from "./extract-rich-tags";
+import { IcuParseError } from "./icu-parse-error";
 
 describe("extractRichTags()", () => {
   test("returns empty arrays for plain text", () => {
@@ -84,20 +85,20 @@ describe("extractRichTags()", () => {
   });
 
   describe("error cases", () => {
-    test("throws on malformed ICU syntax", () => {
-      expect(() => extractRichTags("{count, plural, one {item}")).toThrow();
+    test("throws IcuParseError on malformed ICU syntax", () => {
+      expect(() => extractRichTags("{count, plural, one {item}")).toThrow(IcuParseError);
     });
 
-    test("throws on invalid XML nesting", () => {
-      expect(() => extractRichTags("<a><b></a></b>")).toThrow();
+    test("throws IcuParseError on invalid XML nesting", () => {
+      expect(() => extractRichTags("<a><b></a></b>")).toThrow(IcuParseError);
     });
 
-    test("throws on unclosed tag", () => {
-      expect(() => extractRichTags("<bold>hello")).toThrow();
+    test("throws IcuParseError on unclosed tag", () => {
+      expect(() => extractRichTags("<bold>hello")).toThrow(IcuParseError);
     });
 
-    test("throws on closing tag without opening tag", () => {
-      expect(() => extractRichTags("hello</bold>")).toThrow();
+    test("throws IcuParseError on closing tag without opening tag", () => {
+      expect(() => extractRichTags("hello</bold>")).toThrow(IcuParseError);
     });
   });
 });

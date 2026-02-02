@@ -1,6 +1,7 @@
 import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
 
 import { assertExists } from "../../errors/assert-exists";
+import { IcuParseError } from "./icu-parse-error";
 
 export type ExtractRichTagsResult = Readonly<{
   tags: readonly string[];
@@ -58,7 +59,15 @@ function visit(
 }
 
 export function extractRichTags(value: string): ExtractRichTagsResult {
-  const ast = parse(value, { ignoreTag: false });
+  let ast: readonly MessageFormatElement[];
+  try {
+    ast = parse(value, { ignoreTag: false });
+  } catch (e) {
+    if (e instanceof Error) {
+      throw new IcuParseError(e.message, { cause: e });
+    }
+    throw e;
+  }
 
   const tags = new Set<string>();
   const selfClosingTags = new Set<string>();
