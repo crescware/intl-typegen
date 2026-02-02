@@ -1,0 +1,9 @@
+{
+  "bbb": {
+    "b1": {
+      "b1a": "b1a-message",
+      "b1b": "b1b-message"
+    },
+    "b2": "b2-message"
+  }
+}

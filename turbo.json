@@ -1,0 +1,35 @@
+{
+	"$schema": "https://turbo.build/schema.json",
+	"tasks": {
+		"turbo:check": {
+			"dependsOn": [
+				"check:lint",
+				"check:types",
+				"test"
+			]
+		},
+		"check:lint": {
+			"inputs": [
+				"src/**"
+			]
+		},
+		"check:types": {
+			"inputs": [
+				"src/**",
+				"tsconfig.json"
+			]
+		},
+		"format": {
+			"inputs": [
+				"src/**"
+			],
+			"cache": false
+		},
+		"test": {
+			"inputs": [
+				"src/**",
+				"test/**"
+			]
+		}
+	}
+}
