@@ -49,18 +49,41 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 1: Create Tag Parser Utility
+### Step 1: Add Dependency and Create Tag Parser Utility
+
+**Add dependency:**
+```bash
+pnpm add @formatjs/icu-messageformat-parser
+```
 
 **File:** `src/generate/translation/extract-rich-tags.ts`
 
-Create a function to extract XML-like tag names from translation strings:
+Use the FormatJS ICU parser to extract tag names from translation strings. This ensures compatibility with next-intl since both use the same underlying parser.
 
 ```typescript
-// Pattern: <tagName>...</tagName>
-const TAG_PATTERN = /<([a-zA-Z][a-zA-Z0-9]*)>[^<]*<\/\1>/g;
+import { parse, TYPE, type MessageFormatElement } from "@formatjs/icu-messageformat-parser";
 
 export function extractRichTags(value: string): string[] {
-  // Returns unique tag names: ["terms", "privacy"]
+  const ast = parse(value, { ignoreTag: false });
+  const tags = new Set<string>();
+
+  function visit(elements: MessageFormatElement[]): void {
+    for (const el of elements) {
+      if (el.type === TYPE.tag) {
+        tags.add(el.value);
+        visit(el.children);
+      }
+      // Handle plural/select which can contain nested messages
+      if ("options" in el) {
+        for (const option of Object.values(el.options)) {
+          visit(option.value);
+        }
+      }
+    }
+  }
+
+  visit(ast);
+  return Array.from(tags);
 }
 ```
 
@@ -129,6 +152,7 @@ Update existing test fixtures in `test/fixtures/` to match new output format.
 
 | File | Action |
 |------|--------|
+| `package.json` | Add `@formatjs/icu-messageformat-parser` dependency |
 | `src/generate/translation/generate-file.ts` | Major rewrite |
 | `src/generate/translation/extract-rich-tags.ts` | New file |
 | `src/generate/translation/analyze-rich-keys.ts` | New file |
@@ -142,7 +166,7 @@ Update existing test fixtures in `test/fixtures/` to match new output format.
 
 2. **next-intl only (for now)**: Generate next-intl style output only. Future configuration option can be added later.
 
-3. **Tag extraction regex**: Use `<([a-zA-Z][a-zA-Z0-9]*)>[^<]*<\/\1>` to match self-closing XML-like tags.
+3. **Use FormatJS parser**: Use `@formatjs/icu-messageformat-parser` to parse ICU messages and extract tags from the AST. This ensures compatibility with next-intl which uses the same parser.
 
 4. **Per-key rich overloads**: Each key with tags gets its own typed options object matching its specific tags.
 
