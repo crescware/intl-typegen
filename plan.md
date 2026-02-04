@@ -51,76 +51,7 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 8: Display Report in `generate.ts` [TODO]
-
-**File:** `src/generate/generate.ts`
-
-Collect warnings and ignored properties from all `generateFile` calls and display at the end:
-
-```typescript
-import type { IgnoredProperty } from "./translation/analyze-rich-keys";
-
-const allWarnings: string[] = [];
-const allIgnoredProperties: IgnoredProperty[] = [];
-
-for (const [name, obj] of Object.entries(data)) {
-  const { content, warnings, ignoredProperties } = generateFile(name, obj);
-  allWarnings.push(...warnings);
-  allIgnoredProperties.push(...ignoredProperties);
-  // ... write file
-}
-
-// Display report at the end
-if (allIgnoredProperties.length > 0) {
-  console.warn("\nIgnored properties:");
-  for (const { key, reason } of allIgnoredProperties) {
-    console.warn(`  - "${key}": ${reason}`);
-  }
-}
-
-if (allWarnings.length > 0) {
-  console.warn("\nWarnings:");
-  for (const warning of allWarnings) {
-    console.warn(`  - ${warning}`);
-  }
-}
-```
-
-**Example output:**
-```
-Ignored properties:
-  - "HomePage.maxRetries": Number values are not valid translation messages
-  - "HomePage.enabled": Boolean values are not valid translation messages
-  - "HomePage.items": Array values are not supported
-
-Warnings:
-  - Key "HomePage.greeting" contains self-closing tag(s) <br/> which are not supported for rich text.
-```
-
-### Step 9: Documentation for `json-value.ts` [TODO]
-
-**File:** `src/generate/translation/json-value.ts`
-
-Add comment explaining schema permissiveness:
-
-```typescript
-/**
- * Represents any valid JSON value.
- *
- * Note: This schema accepts all JSON types for parsing flexibility, but only
- * `string` values are valid for translation messages at the top level.
- * Other types (number, boolean, null, array, nested object) will be reported
- * as ignored properties during the generation phase with explanatory reasons.
- */
-export type JsonValue = ...
-```
-
-## Files to Modify
-
-| File | Action |
-|------|--------|
-| `src/generate/translation/json-value.ts` | Add documentation comment |
-| `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
+All steps completed.
 
 ## Key Design Decisions
 

@@ -11,9 +11,10 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { packageDirectorySync } from "package-directory";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { assertExists } from "../errors/assert-exists";
+import { generate } from "./generate";
 
 const packageRoot = packageDirectorySync();
 assertExists(packageRoot);
@@ -564,6 +565,127 @@ describe("generate()", () => {
       const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
       expect(actual).toContain("\tlabel: string;");
       expect(actual).not.toContain("items");
+    });
+  });
+
+  describe("report", () => {
+    let warnSpy: MockInstance;
+    let originalCwd: string;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      originalCwd = process.cwd();
+    });
+
+    afterEach(() => {
+      process.chdir(originalCwd);
+      vi.restoreAllMocks();
+    });
+
+    test("should report ignored properties for non-string values", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({
+          page: { label: "hello", count: 42, enabled: true, empty: null, items: ["a"] },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nIgnored properties:");
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - "count": Number values are not valid translation messages',
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - "enabled": Boolean values are not valid translation messages',
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - "empty": Null values are not valid translation messages',
+      );
+      expect(warnSpy).toHaveBeenCalledWith('  - "items": Array values are not supported');
+    });
+
+    test("should report warning for self-closing tags", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { lineBreak: "Hello<br/>World" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nWarnings:");
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - Key "lineBreak" contains self-closing tag(s) <br/> which are not supported for rich text.',
+      );
+    });
+
+    test("should report warning for malformed ICU syntax", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { broken: "{count, plural, " } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nWarnings:");
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\s+- Key "broken" could not be parsed as ICU message/),
+      );
+    });
+
+    test("should not report when there are no issues", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { hello: "Hello", world: "World" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).not.toHaveBeenCalledWith("\nIgnored properties:");
+      expect(warnSpy).not.toHaveBeenCalledWith("\nWarnings:");
+    });
+
+    test("should report ignored properties for nested objects", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { label: "hello", nested: { key: "value" } } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nIgnored properties:");
+      expect(warnSpy).toHaveBeenCalledWith('  - "nested": Nested objects are not supported');
     });
   });
 
