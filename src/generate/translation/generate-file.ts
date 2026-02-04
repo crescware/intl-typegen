@@ -65,15 +65,10 @@ ${indent}): ReactNode;`;
   return signatures.join("\n");
 }
 
-export function generateFile(
-  name: string,
-  obj: Record<string, JsonValue>,
-): GenerateFileResult {
+export function generateFile(name: string, obj: Record<string, JsonValue>): GenerateFileResult {
   const { richKeys, warnings, ignoredProperties } = analyzeRichKeys(obj);
 
-  const keysWithTags = Object.entries(richKeys).filter(
-    ([, tags]) => tags.length > 0,
-  );
+  const keysWithTags = Object.entries(richKeys).filter(([, tags]) => tags.length > 0);
   const hasRichKeys = keysWithTags.length > 0;
 
   const pascalName = pascalCase(name);
@@ -93,9 +88,9 @@ export function generateFile(
 
 type ${dictionaryName} = DeepReadonly<${typeBody}>;
 
-type ${translationsName} = {
+type ${translationsName} = DeepReadonly<{
 \t(key: keyof ${dictionaryName}): string;${richPart}
-};
+}>;
 
 export function ${functionName}(): ${translationsName} {
 \treturn useTranslations("${name}");

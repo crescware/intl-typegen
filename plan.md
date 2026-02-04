@@ -51,85 +51,55 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 3: Modify `generate-file.ts`
+### Step 5: Wrap Translations type with `DeepReadonly` [DONE]
 
 **File:** `src/generate/translation/generate-file.ts`
 
-Replace current implementation to generate next-intl style output:
+The `Translations` type must be wrapped with `DeepReadonly<...>` to match the expected output.
 
-1. Add import statements (next-intl, react, ts-essentials)
-2. Wrap dictionary type with `DeepReadonly<...>`
-3. Generate `{Name}Translations` callable type:
-   - Base call signature: `(key: keyof {Name}Dictionary): string`
-   - Conditional `rich()` method (only if keys with tags exist)
-4. Generate function that returns `useTranslations("{name}")`
-5. Return both generated content and warnings from `analyzeRichKeys`
+Current:
+```typescript
+type ${translationsName} = {
+```
+
+Expected:
+```typescript
+type ${translationsName} = DeepReadonly<{
+```
+
+No import changes needed -- `DeepReadonly` is already always imported.
+
+### Step 6: Remove nested object support from `filterValidValues` [TODO]
+
+**File:** `src/generate/translation/generate-file.ts`
+
+The `filterValidValues` function currently keeps nested objects. Only string values should pass through:
 
 ```typescript
-import { analyzeRichKeys, type IgnoredProperty } from "./analyze-rich-keys";
-
-export type GenerateFileResult = Readonly<{
-  content: string;
-  warnings: readonly string[];
-  ignoredProperties: readonly IgnoredProperty[];
-}>;
-
-export function generateFile(name: string, obj: Record<string, JsonValue>): GenerateFileResult {
-  const { richKeys, warnings, ignoredProperties } = analyzeRichKeys(obj);
-  // richKeys is Record<string, readonly string[]> mapping key -> tags
-  // Filter to only keys that have tags: Object.entries(richKeys).filter(([, tags]) => tags.length > 0)
-  // ... generate content
-  return { content, warnings, ignoredProperties };
+function filterValidValues(obj: Record<string, JsonValue>): Record<string, JsonValue> {
+  const result: Record<string, JsonValue> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === "string") {
+      result[key] = value;
+    }
+  }
+  return result;
 }
 ```
 
-### Step 3b: Update `generate-type-body.ts`
-
-**File:** `src/generate/translation/generate-type-body.ts`
-
-Modify to skip non-string values when generating type body:
-
-```typescript
-export function generateTypeBody(obj: { [key: string]: JsonValue }, indent = "\t"): string {
-  const closingIndent = indent.slice(0, -1) || "";
-
-  const lines = Object.entries(obj)
-    .filter(([, value]) => typeof value === "string")
-    .map(([key, value]) => {
-      const type = inferType(value, indent + "\t");
-      return `${indent}${formatKey(key)}: ${type};`;
-    });
-
-  return `{\n${lines.join("\n")}\n${closingIndent}}`;
-}
-```
-
-This filtering is consistent with `analyzeRichKeys` which reports non-string value types as ignored.
-
-### Step 4: Generate Rich Method Signature
-
-**File:** `src/generate/translation/generate-rich-signature.ts`
-
-Create a function to generate the `rich()` method type signature:
-
-```typescript
-import type { RichKeys } from "./analyze-rich-keys";
-
-export function generateRichSignature<T extends string>(
-  richKeys: RichKeys<T>,
-  dictionaryName: string,
-  indent: string,
-): string {
-  // Filter to keys that have tags
-  const keysWithTags = Object.entries(richKeys).filter(([, tags]) => tags.length > 0);
-  // Generate overloaded rich() signatures for each key with tags
-  // Each key gets its own signature with specific options type
-}
-```
-
-### Step 5: Update Tests
+### Step 7: Update Tests [TODO]
 
 **File:** `src/generate/generate.test.ts`
+
+Update all inline expected outputs and test fixtures to reflect:
+- `DeepReadonly` wrapping on the `Translations` type
+- Nested objects excluded from dictionary type (only strings kept)
+
+Test fixtures to update:
+- `test/fixtures/basic/expected/use-aaa-translation.ts`
+- `test/fixtures/basic/expected/use-foo-bar-translation.ts`
+- `test/fixtures/nested/expected/use-bbb-translation.ts` (also remove nested `b1` from dictionary)
+- `test/fixtures/types/expected/use-mixed-translation.ts`
 
 Add new test cases:
 - Keys with single tag
@@ -143,9 +113,7 @@ Add new test cases:
 - Warning: Malformed ICU syntax (parse error)
 - Warning: Self-closing tags `<br/>`
 
-Update existing test fixtures in `test/fixtures/` to match new output format.
-
-### Step 6: Display Report in `generate.ts`
+### Step 8: Display Report in `generate.ts` [TODO]
 
 **File:** `src/generate/generate.ts`
 
@@ -191,7 +159,7 @@ Warnings:
   - Key "HomePage.greeting" contains self-closing tag(s) <br/> which are not supported for rich text.
 ```
 
-### Documentation: `json-value.ts`
+### Step 9: Documentation for `json-value.ts` [TODO]
 
 **File:** `src/generate/translation/json-value.ts`
 
@@ -214,11 +182,9 @@ export type JsonValue = ...
 | File | Action |
 |------|--------|
 | `src/generate/translation/json-value.ts` | Add documentation comment |
-| `src/generate/translation/generate-file.ts` | Major rewrite |
-| `src/generate/translation/generate-type-body.ts` | Skip non-string values (number, boolean, null, array, nested object) |
-| `src/generate/translation/generate-rich-signature.ts` | New file |
+| `src/generate/translation/generate-file.ts` | Wrap Translations with `DeepReadonly`, remove nested object support from `filterValidValues` |
 | `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
-| `src/generate/generate.test.ts` | Update expected outputs |
+| `src/generate/generate.test.ts` | Update expected outputs for `DeepReadonly` and nested object removal |
 | `test/fixtures/*/expected/*.ts` | Update expected files |
 
 ## Key Design Decisions

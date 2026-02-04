@@ -5,9 +5,9 @@ type MixedDictionary = DeepReadonly<{
 	str: string;
 }>;
 
-type MixedTranslations = {
+type MixedTranslations = DeepReadonly<{
 	(key: keyof MixedDictionary): string;
-};
+}>;
 
 export function useMixedTranslations(): MixedTranslations {
 	return useTranslations("mixed");

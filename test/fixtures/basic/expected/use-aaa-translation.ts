@@ -6,9 +6,9 @@ type AaaDictionary = DeepReadonly<{
 	a2: string;
 }>;
 
-type AaaTranslations = {
+type AaaTranslations = DeepReadonly<{
 	(key: keyof AaaDictionary): string;
-};
+}>;
 
 export function useAaaTranslations(): AaaTranslations {
 	return useTranslations("aaa");

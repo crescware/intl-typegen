@@ -5,9 +5,9 @@ type FooBarDictionary = DeepReadonly<{
 	foo: string;
 }>;
 
-type FooBarTranslations = {
+type FooBarTranslations = DeepReadonly<{
 	(key: keyof FooBarDictionary): string;
-};
+}>;
 
 export function useFooBarTranslations(): FooBarTranslations {
 	return useTranslations("fooBar");
