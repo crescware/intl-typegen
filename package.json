@@ -31,6 +31,7 @@
   },
   "type": "module",
   "dependencies": {
+    "@formatjs/icu-messageformat-parser": "^3.5.1",
     "commander": "^14.0.2",
     "scule": "^1.3.0",
     "valibot": "^1.2.0",

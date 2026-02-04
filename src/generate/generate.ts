@@ -1,6 +1,8 @@
 import { existsSync, mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 
+import type { IgnoredProperty } from "./translation/analyze-rich-keys";
+
 import { loadConfig } from "../config/load-config";
 import { UsageError } from "../errors/usage-error";
 import { generateLocaleFile } from "./available-locale/generate-locale-file";
@@ -63,6 +65,9 @@ export function generate({ dryRun }: GenerateOptions): void {
   }
 
   // Generate translation files
+  const allWarnings: string[] = [];
+  const allIgnoredProperties: IgnoredProperty[] = [];
+
   for (const [key, value] of Object.entries(json)) {
     const filename = getOutputFilename(key);
     const filepath = join(config.output, filename);
@@ -73,12 +78,30 @@ export function generate({ dryRun }: GenerateOptions): void {
       continue;
     }
 
-    const content = generateFile(key, value);
+    const { content, warnings, ignoredProperties } = generateFile(key, value);
+    allWarnings.push(...warnings);
+    allIgnoredProperties.push(...ignoredProperties);
+
     if (dryRun) {
       printFilePreview(filename, content, fileExists ? "overwrite" : "create");
     } else {
       writeFile(filepath, content);
       console.log(`Generated ${filename}`);
+    }
+  }
+
+  // Display report
+  if (allIgnoredProperties.length > 0) {
+    console.warn("\nIgnored properties:");
+    for (const { key, reason } of allIgnoredProperties) {
+      console.warn(`  - "${key}": ${reason}`);
+    }
+  }
+
+  if (allWarnings.length > 0) {
+    console.warn("\nWarnings:");
+    for (const warning of allWarnings) {
+      console.warn(`  - ${warning}`);
     }
   }
 }

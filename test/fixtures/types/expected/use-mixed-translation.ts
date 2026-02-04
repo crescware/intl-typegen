@@ -1,10 +1,14 @@
-export type MixedDictionary = {
-	str: string;
-	num: number;
-	bool: boolean;
-	nullable: null;
-	arr: string[];
-	emptyArr: unknown[];
-}
+import { useTranslations } from "next-intl";
+import type { DeepReadonly } from "ts-essentials";
 
-export function useMixedTranslation() { /* TODO */ }
+type MixedDictionary = DeepReadonly<{
+	str: string;
+}>;
+
+type MixedTranslations = DeepReadonly<{
+	(key: keyof MixedDictionary): string;
+}>;
+
+export function useMixedTranslations(): MixedTranslations {
+	return useTranslations("mixed");
+}

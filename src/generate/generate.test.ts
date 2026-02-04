@@ -11,9 +11,10 @@ import {
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { packageDirectorySync } from "package-directory";
-import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import { type MockInstance, afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 import { assertExists } from "../errors/assert-exists";
+import { generate } from "./generate";
 
 const packageRoot = packageDirectorySync();
 assertExists(packageRoot);
@@ -129,20 +130,38 @@ describe("generate()", () => {
         "",
         "use-aaa-translation.ts",
         "---",
-        "export type AaaDictionary = {",
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type AaaDictionary = DeepReadonly<{",
         "\ta1: string;",
         "\ta2: string;",
-        "}",
+        "}>;",
         "",
-        "export function useAaaTranslation() { /* TODO */ }",
+        "type AaaTranslations = DeepReadonly<{",
+        "\t(key: keyof AaaDictionary): string;",
+        "}>;",
+        "",
+        "export function useAaaTranslations(): AaaTranslations {",
+        '\treturn useTranslations("aaa");',
+        "}",
         "",
         "use-foo-bar-translation.ts",
         "---",
-        "export type FooBarDictionary = {",
-        "\tfoo: string;",
-        "}",
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
         "",
-        "export function useFooBarTranslation() { /* TODO */ }",
+        "type FooBarDictionary = DeepReadonly<{",
+        "\tfoo: string;",
+        "}>;",
+        "",
+        "type FooBarTranslations = DeepReadonly<{",
+        "\t(key: keyof FooBarDictionary): string;",
+        "}>;",
+        "",
+        "export function useFooBarTranslations(): FooBarTranslations {",
+        '\treturn useTranslations("fooBar");',
+        "}",
         "",
         "",
       ].join("\n");
@@ -191,13 +210,22 @@ describe("generate()", () => {
 
       const actual = readFileSync(join(tempDir, "output", "use-reserved-translation.ts"), "utf-8");
       const expected = [
-        "export type ReservedDictionary = {",
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type ReservedDictionary = DeepReadonly<{",
         "\tclass: string;",
         "\tfunction: string;",
         "\tif: string;",
-        "}",
+        "}>;",
         "",
-        "export function useReservedTranslation() { /* TODO */ }",
+        "type ReservedTranslations = DeepReadonly<{",
+        "\t(key: keyof ReservedDictionary): string;",
+        "}>;",
+        "",
+        "export function useReservedTranslations(): ReservedTranslations {",
+        '\treturn useTranslations("reserved");',
+        "}",
         "",
       ].join("\n");
       expect(actual).toEqual(expected);
@@ -218,12 +246,21 @@ describe("generate()", () => {
 
       const actual = readFileSync(join(tempDir, "output", "use-kebab-translation.ts"), "utf-8");
       const expected = [
-        "export type KebabDictionary = {",
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type KebabDictionary = DeepReadonly<{",
         `\t"foo-bar": string;`,
         `\t"hello-world": string;`,
-        "}",
+        "}>;",
         "",
-        "export function useKebabTranslation() { /* TODO */ }",
+        "type KebabTranslations = DeepReadonly<{",
+        "\t(key: keyof KebabDictionary): string;",
+        "}>;",
+        "",
+        "export function useKebabTranslations(): KebabTranslations {",
+        '\treturn useTranslations("kebab");',
+        "}",
         "",
       ].join("\n");
       expect(actual).toEqual(expected);
@@ -244,15 +281,411 @@ describe("generate()", () => {
 
       const actual = readFileSync(join(tempDir, "output", "use-numeric-translation.ts"), "utf-8");
       const expected = [
-        "export type NumericDictionary = {",
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type NumericDictionary = DeepReadonly<{",
         `\t"123key": string;`,
         `\t"456test": string;`,
-        "}",
+        "}>;",
         "",
-        "export function useNumericTranslation() { /* TODO */ }",
+        "type NumericTranslations = DeepReadonly<{",
+        "\t(key: keyof NumericDictionary): string;",
+        "}>;",
+        "",
+        "export function useNumericTranslations(): NumericTranslations {",
+        '\treturn useTranslations("numeric");',
+        "}",
         "",
       ].join("\n");
       expect(actual).toEqual(expected);
+    });
+  });
+
+  describe("rich text", () => {
+    test("should generate rich() signature for key with single tag", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { greeting: "Hello <b>world</b>" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tgreeting: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "greeting">,',
+        "\t\toptions: {",
+        "\t\t\tb: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should generate rich() signature for key with multiple tags", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({
+          page: {
+            agreement: "I agree to the <terms>Terms</terms> and <privacy>Privacy</privacy>",
+          },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tagreement: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "agreement">,',
+        "\t\toptions: {",
+        "\t\t\tterms: (chunk: ReactNode) => ReactElement;",
+        "\t\t\tprivacy: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should generate rich() signatures for mixed keys", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({
+          page: {
+            plain: "No tags here",
+            rich: "Click <link>here</link>",
+          },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tplain: string;",
+        "\trich: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "rich">,',
+        "\t\toptions: {",
+        "\t\t\tlink: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should omit rich() when no keys have tags", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { hello: "Hello", world: "World" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).not.toContain("rich(");
+      expect(actual).not.toContain("StrictExtract");
+      expect(actual).not.toContain("ReactNode");
+    });
+
+    test("should generate file for key with self-closing tag without rich()", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { lineBreak: "Hello<br/>World" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).toContain("\tlineBreak: string;");
+      expect(actual).not.toContain("rich(");
+    });
+
+    test("should generate file for key with malformed ICU syntax", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { broken: "{count, plural, ", valid: "hello" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).toContain("\tbroken: string;");
+      expect(actual).toContain("\tvalid: string;");
+      expect(actual).not.toContain("rich(");
+    });
+  });
+
+  describe("ignored values", () => {
+    test("should exclude number values from dictionary", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { label: "hello", count: 42 } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).toContain("\tlabel: string;");
+      expect(actual).not.toContain("count");
+    });
+
+    test("should exclude boolean values from dictionary", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { label: "hello", enabled: true } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).toContain("\tlabel: string;");
+      expect(actual).not.toContain("enabled");
+    });
+
+    test("should exclude null values from dictionary", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { label: "hello", empty: null } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).toContain("\tlabel: string;");
+      expect(actual).not.toContain("empty");
+    });
+
+    test("should exclude array values from dictionary", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { label: "hello", items: ["a", "b"] } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      expect(actual).toContain("\tlabel: string;");
+      expect(actual).not.toContain("items");
+    });
+  });
+
+  describe("report", () => {
+    let warnSpy: MockInstance;
+    let originalCwd: string;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+      vi.spyOn(console, "log").mockImplementation(() => {});
+      originalCwd = process.cwd();
+    });
+
+    afterEach(() => {
+      process.chdir(originalCwd);
+      vi.restoreAllMocks();
+    });
+
+    test("should report ignored properties for non-string values", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({
+          page: { label: "hello", count: 42, enabled: true, empty: null, items: ["a"] },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nIgnored properties:");
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - "count": Number values are not valid translation messages',
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - "enabled": Boolean values are not valid translation messages',
+      );
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - "empty": Null values are not valid translation messages',
+      );
+      expect(warnSpy).toHaveBeenCalledWith('  - "items": Array values are not supported');
+    });
+
+    test("should report warning for self-closing tags", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { lineBreak: "Hello<br/>World" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nWarnings:");
+      expect(warnSpy).toHaveBeenCalledWith(
+        '  - Key "lineBreak" contains self-closing tag(s) <br/> which are not supported for rich text.',
+      );
+    });
+
+    test("should report warning for malformed ICU syntax", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { broken: "{count, plural, " } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nWarnings:");
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringMatching(/^\s+- Key "broken" could not be parsed as ICU message/),
+      );
+    });
+
+    test("should not report when there are no issues", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { hello: "Hello", world: "World" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).not.toHaveBeenCalledWith("\nIgnored properties:");
+      expect(warnSpy).not.toHaveBeenCalledWith("\nWarnings:");
+    });
+
+    test("should report ignored properties for nested objects", () => {
+      mkdirSync(join(tempDir, "messages"));
+      writeFileSync(
+        join(tempDir, "messages", "en.json"),
+        JSON.stringify({ page: { label: "hello", nested: { key: "value" } } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+      process.chdir(tempDir);
+
+      generate({ dryRun: false });
+
+      expect(warnSpy).toHaveBeenCalledWith("\nIgnored properties:");
+      expect(warnSpy).toHaveBeenCalledWith('  - "nested": Nested objects are not supported');
     });
   });
 
