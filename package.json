@@ -4,7 +4,7 @@
   "version": "0.0.0",
   "author": "Crescware Inc.",
   "bin": {
-    "intl-typegen": "./dist/index.js"
+    "intl-typegen": "dist/index.js"
   },
   "dependencies": {
     "@formatjs/icu-messageformat-parser": "^3.5.1",
