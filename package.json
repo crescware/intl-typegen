@@ -36,7 +36,6 @@
     "typescript"
   ],
   "license": "MIT",
-  "main": "./dist/index.js",
   "packageManager": "pnpm@10.28.2",
   "publishConfig": {
     "access": "public"
