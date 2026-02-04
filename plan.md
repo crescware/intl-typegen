@@ -87,19 +87,14 @@ export function generateFile(name: string, obj: Record<string, JsonValue>): Gene
 
 **File:** `src/generate/translation/generate-type-body.ts`
 
-Modify to skip non-string/non-object values when generating type body:
+Modify to skip non-string values when generating type body:
 
 ```typescript
 export function generateTypeBody(obj: { [key: string]: JsonValue }, indent = "\t"): string {
   const closingIndent = indent.slice(0, -1) || "";
 
   const lines = Object.entries(obj)
-    .filter(([, value]) => {
-      // Only include strings and nested objects
-      if (typeof value === "string") return true;
-      if (typeof value === "object" && value !== null && !Array.isArray(value)) return true;
-      return false;
-    })
+    .filter(([, value]) => typeof value === "string")
     .map(([key, value]) => {
       const type = inferType(value, indent + "\t");
       return `${indent}${formatKey(key)}: ${type};`;
@@ -109,7 +104,7 @@ export function generateTypeBody(obj: { [key: string]: JsonValue }, indent = "\t
 }
 ```
 
-This filtering is consistent with `analyzeRichKeys` which reports the same value types as ignored.
+This filtering is consistent with `analyzeRichKeys` which reports non-string value types as ignored.
 
 ### Step 4: Generate Rich Method Signature
 
@@ -220,7 +215,7 @@ export type JsonValue = ...
 |------|--------|
 | `src/generate/translation/json-value.ts` | Add documentation comment |
 | `src/generate/translation/generate-file.ts` | Major rewrite |
-| `src/generate/translation/generate-type-body.ts` | Skip non-string/non-object values (number, boolean, null, array) |
+| `src/generate/translation/generate-type-body.ts` | Skip non-string values (number, boolean, null, array, nested object) |
 | `src/generate/translation/generate-rich-signature.ts` | New file |
 | `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
 | `src/generate/generate.test.ts` | Update expected outputs |
@@ -236,7 +231,7 @@ export type JsonValue = ...
 
 4. **Per-key rich overloads**: Each key with tags gets its own typed options object matching its specific tags.
 
-5. **Flat keys only**: Only direct string properties are analyzed for rich text tags. Nested objects are treated as ignored properties.
+5. **Flat keys only**: Only direct string properties are valid translation messages. Nested objects are not supported and are reported as ignored properties.
 
 6. **Comprehensive warnings**: Users are warned when output is not generated as expected:
    - Malformed ICU syntax (parse error caught, key skipped)
