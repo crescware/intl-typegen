@@ -51,22 +51,6 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 7: Add New Test Cases [TODO]
-
-**File:** `src/generate/generate.test.ts`
-
-Add new test cases:
-- Keys with single tag
-- Keys with multiple tags
-- Mixed keys (some with tags, some without)
-- No keys with tags (should omit `rich()` method)
-- Ignored: Number values
-- Ignored: Boolean values
-- Ignored: Null values
-- Ignored: Array values
-- Warning: Malformed ICU syntax (parse error)
-- Warning: Self-closing tags `<br/>`
-
 ### Step 8: Display Report in `generate.ts` [TODO]
 
 **File:** `src/generate/generate.ts`
@@ -137,7 +121,6 @@ export type JsonValue = ...
 |------|--------|
 | `src/generate/translation/json-value.ts` | Add documentation comment |
 | `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
-| `src/generate/generate.test.ts` | Add new test cases |
 
 ## Key Design Decisions
 
