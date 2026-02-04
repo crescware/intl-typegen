@@ -19,7 +19,10 @@
   },
   "keywords": [],
   "license": "MIT",
-  "main": "index.js",
+  "files": [
+    "dist"
+  ],
+  "main": "./dist/index.js",
   "packageManager": "pnpm@10.28.2",
   "scripts": {
     "build": "tsup",
