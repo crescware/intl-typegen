@@ -1,7 +1,7 @@
 {
   "name": "@crescware/intl-typegen",
   "description": "Generate typed translation hooks from JSON/YAML translation files for next-intl",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "author": "Crescware Inc.",
   "bin": {
     "intl-typegen": "dist/index.js"
