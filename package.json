@@ -1,6 +1,6 @@
 {
   "name": "intl-typegen",
-  "description": "",
+  "description": "Generate typed translation hooks from JSON/YAML translation files for next-intl",
   "version": "0.0.0",
   "author": "Crescware Inc.",
   "bin": {
@@ -17,7 +17,18 @@
     "typescript": "^5.9.3",
     "vitest": "4.0.18"
   },
-  "keywords": [],
+  "keywords": [
+    "next-intl",
+    "i18n",
+    "intl",
+    "translation",
+    "typegen",
+    "typescript"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/crescware/intl-typegen.git"
+  },
   "license": "MIT",
   "files": [
     "dist"
