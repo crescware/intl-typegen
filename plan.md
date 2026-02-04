@@ -51,24 +51,6 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 5: Wrap Translations type with `DeepReadonly` [DONE]
-
-**File:** `src/generate/translation/generate-file.ts`
-
-The `Translations` type must be wrapped with `DeepReadonly<...>` to match the expected output.
-
-Current:
-```typescript
-type ${translationsName} = {
-```
-
-Expected:
-```typescript
-type ${translationsName} = DeepReadonly<{
-```
-
-No import changes needed -- `DeepReadonly` is already always imported.
-
 ### Step 6: Remove nested object support from `filterValidValues` [TODO]
 
 **File:** `src/generate/translation/generate-file.ts`
@@ -91,15 +73,8 @@ function filterValidValues(obj: Record<string, JsonValue>): Record<string, JsonV
 
 **File:** `src/generate/generate.test.ts`
 
-Update all inline expected outputs and test fixtures to reflect:
-- `DeepReadonly` wrapping on the `Translations` type
-- Nested objects excluded from dictionary type (only strings kept)
-
-Test fixtures to update:
-- `test/fixtures/basic/expected/use-aaa-translation.ts`
-- `test/fixtures/basic/expected/use-foo-bar-translation.ts`
-- `test/fixtures/nested/expected/use-bbb-translation.ts` (also remove nested `b1` from dictionary)
-- `test/fixtures/types/expected/use-mixed-translation.ts`
+Update test fixtures and inline expected outputs to reflect nested objects excluded from dictionary type (only strings kept):
+- `test/fixtures/nested/expected/use-bbb-translation.ts` (remove nested `b1` from dictionary)
 
 Add new test cases:
 - Keys with single tag
@@ -182,10 +157,10 @@ export type JsonValue = ...
 | File | Action |
 |------|--------|
 | `src/generate/translation/json-value.ts` | Add documentation comment |
-| `src/generate/translation/generate-file.ts` | Wrap Translations with `DeepReadonly`, remove nested object support from `filterValidValues` |
+| `src/generate/translation/generate-file.ts` | Remove nested object support from `filterValidValues` |
 | `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
-| `src/generate/generate.test.ts` | Update expected outputs for `DeepReadonly` and nested object removal |
-| `test/fixtures/*/expected/*.ts` | Update expected files |
+| `src/generate/generate.test.ts` | Update expected outputs for nested object removal, add new test cases |
+| `test/fixtures/nested/expected/use-bbb-translation.ts` | Remove nested `b1` from dictionary |
 
 ## Key Design Decisions
 
