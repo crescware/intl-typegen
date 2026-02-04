@@ -51,30 +51,9 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 6: Remove nested object support from `filterValidValues` [TODO]
-
-**File:** `src/generate/translation/generate-file.ts`
-
-The `filterValidValues` function currently keeps nested objects. Only string values should pass through:
-
-```typescript
-function filterValidValues(obj: Record<string, JsonValue>): Record<string, JsonValue> {
-  const result: Record<string, JsonValue> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (typeof value === "string") {
-      result[key] = value;
-    }
-  }
-  return result;
-}
-```
-
-### Step 7: Update Tests [TODO]
+### Step 7: Add New Test Cases [TODO]
 
 **File:** `src/generate/generate.test.ts`
-
-Update test fixtures and inline expected outputs to reflect nested objects excluded from dictionary type (only strings kept):
-- `test/fixtures/nested/expected/use-bbb-translation.ts` (remove nested `b1` from dictionary)
 
 Add new test cases:
 - Keys with single tag
@@ -157,10 +136,8 @@ export type JsonValue = ...
 | File | Action |
 |------|--------|
 | `src/generate/translation/json-value.ts` | Add documentation comment |
-| `src/generate/translation/generate-file.ts` | Remove nested object support from `filterValidValues` |
 | `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
-| `src/generate/generate.test.ts` | Update expected outputs for nested object removal, add new test cases |
-| `test/fixtures/nested/expected/use-bbb-translation.ts` | Remove nested `b1` from dictionary |
+| `src/generate/generate.test.ts` | Add new test cases |
 
 ## Key Design Decisions
 
