@@ -1,9 +1,18 @@
-export type BbbDictionary = {
+import { useTranslations } from "next-intl";
+import type { DeepReadonly } from "ts-essentials";
+
+type BbbDictionary = DeepReadonly<{
 	b1: {
 		b1a: string;
 		b1b: string;
 	};
 	b2: string;
-}
+}>;
 
-export function useBbbTranslation() { /* TODO */ }
+type BbbTranslations = {
+	(key: keyof BbbDictionary): string;
+};
+
+export function useBbbTranslations(): BbbTranslations {
+	return useTranslations("bbb");
+}

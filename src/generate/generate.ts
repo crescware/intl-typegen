@@ -73,7 +73,7 @@ export function generate({ dryRun }: GenerateOptions): void {
       continue;
     }
 
-    const content = generateFile(key, value);
+    const { content } = generateFile(key, value);
     if (dryRun) {
       printFilePreview(filename, content, fileExists ? "overwrite" : "create");
     } else {

@@ -51,178 +51,6 @@ export function useHomePageTranslations(): HomePageTranslations {
 
 ## Implementation Steps
 
-### Step 1b: Add Custom Error Type and Update extractRichTags
-
-**File:** `src/generate/translation/icu-parse-error.ts`
-
-Create a custom error for ICU parse failures:
-
-```typescript
-/**
- * ICU message format parse error. The translation string contains invalid ICU syntax.
- */
-export class IcuParseError extends Error {
-  name = "IcuParseError";
-
-  constructor(message: string, options?: ErrorOptions) {
-    super(message, options);
-  }
-}
-```
-
-**File:** `src/generate/translation/extract-rich-tags.ts`
-
-Update `extractRichTags` to catch FormatJS parse errors and throw `IcuParseError`:
-
-```typescript
-import { IcuParseError } from "./icu-parse-error";
-
-export function extractRichTags(value: string): ExtractRichTagsResult {
-  let ast;
-  try {
-    ast = parse(value, { ignoreTag: false });
-  } catch (e) {
-    if (e instanceof Error) {
-      throw new IcuParseError(e.message, { cause: e });
-    }
-    throw e;
-  }
-
-  // ... rest of implementation
-}
-```
-
-### Step 2: Create Rich Keys Analyzer
-
-**File:** `src/generate/translation/analyze-rich-keys.ts`
-
-Analyze direct string properties only. Collect warnings for unsupported patterns.
-
-```typescript
-import { extractRichTags } from "./extract-rich-tags";
-import { IcuParseError } from "./icu-parse-error";
-import type { JsonValue } from "./json-value";
-
-export type RichKeyInfo = Readonly<{
-  key: string;
-  tags: readonly string[];
-}>;
-
-export type IgnoredProperty = Readonly<{
-  key: string;
-  reason: string;
-}>;
-
-export type AnalyzeRichKeysResult = Readonly<{
-  richKeys: readonly RichKeyInfo[];
-  warnings: readonly string[];
-  ignoredProperties: readonly IgnoredProperty[];
-}>;
-
-export function analyzeRichKeys(
-  obj: Record<string, JsonValue>,
-  parentPath = "",
-): AnalyzeRichKeysResult {
-  const richKeys: RichKeyInfo[] = [];
-  const warnings: string[] = [];
-  const ignoredProperties: IgnoredProperty[] = [];
-
-  for (const [key, value] of Object.entries(obj)) {
-    const currentPath = parentPath ? `${parentPath}.${key}` : key;
-
-    if (typeof value === "string") {
-      let result;
-      try {
-        result = extractRichTags(value);
-      } catch (e) {
-        if (e instanceof IcuParseError) {
-          warnings.push(
-            `Key "${currentPath}" could not be parsed as ICU message: ${e.message}. Skipping rich text extraction.`
-          );
-          continue;
-        }
-        throw e;
-      }
-
-      // Warning: Self-closing tags
-      if (result.selfClosingTags.length > 0) {
-        warnings.push(
-          `Key "${currentPath}" contains self-closing tag(s) <${result.selfClosingTags.join("/>, <")}/> which are not supported for rich text.`
-        );
-      }
-
-      if (result.tags.length > 0) {
-        if (parentPath) {
-          // Warning: Nested string with tags
-          warnings.push(
-            `Nested key "${currentPath}" contains rich text tags [${result.tags.join(", ")}] but nested keys are not supported.`
-          );
-        } else {
-          // Top-level string with tags - collect
-          richKeys.push({ key, tags: result.tags });
-        }
-      }
-    } else if (Array.isArray(value)) {
-      // Ignored: Array values
-      ignoredProperties.push({
-        key: currentPath,
-        reason: "Array values are not supported",
-      });
-      // Additional warning if array contains tagged strings
-      const arrayTags = new Set<string>();
-      for (const item of value) {
-        if (typeof item === "string") {
-          try {
-            const result = extractRichTags(item);
-            result.tags.forEach(tag => arrayTags.add(tag));
-          } catch (e) {
-            if (e instanceof IcuParseError) {
-              // Malformed ICU in array item - already ignored, skip silently
-              continue;
-            }
-            throw e;
-          }
-        }
-      }
-      if (arrayTags.size > 0) {
-        warnings.push(
-          `Key "${currentPath}" is an array containing rich text tags [${Array.from(arrayTags).join(", ")}] but arrays are not supported.`
-        );
-      }
-    } else if (typeof value === "number") {
-      ignoredProperties.push({
-        key: currentPath,
-        reason: "Number values are not valid translation messages",
-      });
-    } else if (typeof value === "boolean") {
-      ignoredProperties.push({
-        key: currentPath,
-        reason: "Boolean values are not valid translation messages",
-      });
-    } else if (value === null) {
-      ignoredProperties.push({
-        key: currentPath,
-        reason: "Null values are not valid translation messages",
-      });
-    } else if (typeof value === "object") {
-      // Recursively check nested objects for warnings and ignored properties
-      // Note: richKeys are not propagated because nested strings with tags become warnings
-      const nested = analyzeRichKeys(value as Record<string, JsonValue>, currentPath);
-      warnings.push(...nested.warnings);
-      ignoredProperties.push(...nested.ignoredProperties);
-    }
-  }
-
-  return { richKeys, warnings, ignoredProperties };
-}
-```
-
-**Warning types:**
-1. **Malformed ICU syntax**: Parse error caught and reported as warning, key skipped
-2. **Self-closing tags**: `<br/>` not supported for rich text
-3. **Nested keys**: Tags in nested objects not supported
-4. **Arrays**: Tags in array items not supported
-
 ### Step 3: Modify `generate-file.ts`
 
 **File:** `src/generate/translation/generate-file.ts`
@@ -238,7 +66,7 @@ Replace current implementation to generate next-intl style output:
 5. Return both generated content and warnings from `analyzeRichKeys`
 
 ```typescript
-import type { IgnoredProperty } from "./analyze-rich-keys";
+import { analyzeRichKeys, type IgnoredProperty } from "./analyze-rich-keys";
 
 export type GenerateFileResult = Readonly<{
   content: string;
@@ -248,7 +76,9 @@ export type GenerateFileResult = Readonly<{
 
 export function generateFile(name: string, obj: Record<string, JsonValue>): GenerateFileResult {
   const { richKeys, warnings, ignoredProperties } = analyzeRichKeys(obj);
-  // ... generate content using richKeys (excluding ignored properties from type)
+  // richKeys is Record<string, readonly string[]> mapping key -> tags
+  // Filter to only keys that have tags: Object.entries(richKeys).filter(([, tags]) => tags.length > 0)
+  // ... generate content
   return { content, warnings, ignoredProperties };
 }
 ```
@@ -288,11 +118,15 @@ This filtering is consistent with `analyzeRichKeys` which reports the same value
 Create a function to generate the `rich()` method type signature:
 
 ```typescript
-export function generateRichSignature(
-  richKeys: readonly RichKeyInfo[],
+import type { RichKeys } from "./analyze-rich-keys";
+
+export function generateRichSignature<T extends string>(
+  richKeys: RichKeys<T>,
   dictionaryName: string,
   indent: string,
 ): string {
+  // Filter to keys that have tags
+  const keysWithTags = Object.entries(richKeys).filter(([, tags]) => tags.length > 0);
   // Generate overloaded rich() signatures for each key with tags
   // Each key gets its own signature with specific options type
 }
@@ -312,9 +146,7 @@ Add new test cases:
 - Ignored: Null values
 - Ignored: Array values
 - Warning: Malformed ICU syntax (parse error)
-- Warning: Nested objects with tags
 - Warning: Self-closing tags `<br/>`
-- Warning: Arrays with tagged strings
 
 Update existing test fixtures in `test/fixtures/` to match new output format.
 
@@ -364,21 +196,6 @@ Warnings:
   - Key "HomePage.greeting" contains self-closing tag(s) <br/> which are not supported for rich text.
 ```
 
-## Files to Modify
-
-| File | Action |
-|------|--------|
-| `src/generate/translation/icu-parse-error.ts` | New file |
-| `src/generate/translation/extract-rich-tags.ts` | Wrap FormatJS errors in IcuParseError |
-| `src/generate/translation/json-value.ts` | Add documentation comment |
-| `src/generate/translation/generate-file.ts` | Major rewrite |
-| `src/generate/translation/generate-type-body.ts` | Skip non-string/non-object values (number, boolean, null, array) |
-| `src/generate/translation/analyze-rich-keys.ts` | New file |
-| `src/generate/translation/generate-rich-signature.ts` | New file |
-| `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
-| `src/generate/generate.test.ts` | Update expected outputs |
-| `test/fixtures/*/expected/*.ts` | Update expected files |
-
 ### Documentation: `json-value.ts`
 
 **File:** `src/generate/translation/json-value.ts`
@@ -390,12 +207,24 @@ Add comment explaining schema permissiveness:
  * Represents any valid JSON value.
  *
  * Note: This schema accepts all JSON types for parsing flexibility, but only
- * `string` and nested `object` values are valid for translation messages.
- * Other types (number, boolean, null, array) will be reported as ignored
- * properties during the generation phase with explanatory reasons.
+ * `string` values are valid for translation messages at the top level.
+ * Other types (number, boolean, null, array, nested object) will be reported
+ * as ignored properties during the generation phase with explanatory reasons.
  */
 export type JsonValue = ...
 ```
+
+## Files to Modify
+
+| File | Action |
+|------|--------|
+| `src/generate/translation/json-value.ts` | Add documentation comment |
+| `src/generate/translation/generate-file.ts` | Major rewrite |
+| `src/generate/translation/generate-type-body.ts` | Skip non-string/non-object values (number, boolean, null, array) |
+| `src/generate/translation/generate-rich-signature.ts` | New file |
+| `src/generate/generate.ts` | Collect and display report (ignored + warnings) |
+| `src/generate/generate.test.ts` | Update expected outputs |
+| `test/fixtures/*/expected/*.ts` | Update expected files |
 
 ## Key Design Decisions
 
@@ -407,19 +236,18 @@ export type JsonValue = ...
 
 4. **Per-key rich overloads**: Each key with tags gets its own typed options object matching its specific tags.
 
-5. **Flat keys only**: Only direct string properties are analyzed for rich text tags. Nested objects are ignored (no dot notation like `"section.title"`).
+5. **Flat keys only**: Only direct string properties are analyzed for rich text tags. Nested objects are treated as ignored properties.
 
 6. **Comprehensive warnings**: Users are warned when output is not generated as expected:
    - Malformed ICU syntax (parse error caught, key skipped)
-   - Nested keys with tags (not supported)
    - Self-closing tags like `<br/>` (treated as literals by FormatJS)
-   - Arrays containing tagged strings (not supported)
 
-7. **Strict value types**: Only strings and nested objects are accepted. Other JSON types are ignored with reasons:
+7. **Strict value types**: Only strings are accepted at the top level. Other JSON types are ignored with reasons:
    - `number` - "Number values are not valid translation messages"
    - `boolean` - "Boolean values are not valid translation messages"
    - `null` - "Null values are not valid translation messages"
-   - `array` - "Array values are not supported" (with additional warning if contains tags)
+   - `array` - "Array values are not supported"
+   - `object` - "Nested objects are not supported"
 
 ## Verification
 
@@ -432,9 +260,7 @@ export type JsonValue = ...
    - No rich text tags
    - Multiple keys with different tags
    - Ignored properties are reported for:
-     - Number, boolean, null, array values
+     - Number, boolean, null, array, nested object values
    - Warnings are displayed for:
      - Malformed ICU syntax (parse error)
-     - Nested objects with tags
      - Self-closing tags `<br/>`
-     - Arrays containing tagged strings
