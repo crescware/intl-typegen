@@ -40,18 +40,18 @@ describe("generate()", () => {
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
       const expectedAaa = readFileSync(
-        join(tempDir, "expected", "use-aaa-translation.ts"),
+        join(tempDir, "expected", "use-aaa-translations.ts"),
         "utf-8",
       );
-      const actualAaa = readFileSync(join(tempDir, "output", "use-aaa-translation.ts"), "utf-8");
+      const actualAaa = readFileSync(join(tempDir, "output", "use-aaa-translations.ts"), "utf-8");
       expect(actualAaa).toBe(expectedAaa);
 
       const expectedFooBar = readFileSync(
-        join(tempDir, "expected", "use-foo-bar-translation.ts"),
+        join(tempDir, "expected", "use-foo-bar-translations.ts"),
         "utf-8",
       );
       const actualFooBar = readFileSync(
-        join(tempDir, "output", "use-foo-bar-translation.ts"),
+        join(tempDir, "output", "use-foo-bar-translations.ts"),
         "utf-8",
       );
       expect(actualFooBar).toBe(expectedFooBar);
@@ -65,9 +65,9 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const expected = readFileSync(join(tempDir, "expected", "use-bbb-translation.ts"), "utf-8");
+      const expected = readFileSync(join(tempDir, "expected", "use-bbb-translations.ts"), "utf-8");
       const actual = readFileSync(
-        join(tempDir, "generated", "types", "use-bbb-translation.ts"),
+        join(tempDir, "generated", "types", "use-bbb-translations.ts"),
         "utf-8",
       );
       expect(actual).toBe(expected);
@@ -81,8 +81,11 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const expected = readFileSync(join(tempDir, "expected", "use-mixed-translation.ts"), "utf-8");
-      const actual = readFileSync(join(tempDir, "output", "use-mixed-translation.ts"), "utf-8");
+      const expected = readFileSync(
+        join(tempDir, "expected", "use-mixed-translations.ts"),
+        "utf-8",
+      );
+      const actual = readFileSync(join(tempDir, "output", "use-mixed-translations.ts"), "utf-8");
       expect(actual).toBe(expected);
     });
   });
@@ -93,19 +96,19 @@ describe("generate()", () => {
       cpSync(fixturePath, tempDir, { recursive: true });
 
       const existingContent = readFileSync(
-        join(tempDir, "existing", "use-aaa-translation.ts"),
+        join(tempDir, "existing", "use-aaa-translations.ts"),
         "utf-8",
       );
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
       const afterContent = readFileSync(
-        join(tempDir, "existing", "use-aaa-translation.ts"),
+        join(tempDir, "existing", "use-aaa-translations.ts"),
         "utf-8",
       );
       expect(afterContent).toBe(existingContent);
 
-      expect(existsSync(join(tempDir, "existing", "use-bbb-translation.ts"))).toBe(true);
+      expect(existsSync(join(tempDir, "existing", "use-bbb-translations.ts"))).toBe(true);
     });
   });
 
@@ -128,7 +131,7 @@ describe("generate()", () => {
         "",
         "export type AvailableLocale = (typeof availableLocale)[number];",
         "",
-        "use-aaa-translation.ts",
+        "use-aaa-translations.ts",
         "---",
         'import { useTranslations } from "next-intl";',
         'import type { DeepReadonly } from "ts-essentials";',
@@ -146,7 +149,7 @@ describe("generate()", () => {
         '\treturn useTranslations("aaa");',
         "}",
         "",
-        "use-foo-bar-translation.ts",
+        "use-foo-bar-translations.ts",
         "---",
         'import { useTranslations } from "next-intl";',
         'import type { DeepReadonly } from "ts-essentials";',
@@ -208,7 +211,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-reserved-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-reserved-translations.ts"), "utf-8");
       const expected = [
         'import { useTranslations } from "next-intl";',
         'import type { DeepReadonly } from "ts-essentials";',
@@ -244,7 +247,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-kebab-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-kebab-translations.ts"), "utf-8");
       const expected = [
         'import { useTranslations } from "next-intl";',
         'import type { DeepReadonly } from "ts-essentials";',
@@ -279,7 +282,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-numeric-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-numeric-translations.ts"), "utf-8");
       const expected = [
         'import { useTranslations } from "next-intl";',
         'import type { DeepReadonly } from "ts-essentials";',
@@ -316,7 +319,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       const expected = [
         'import { useTranslations } from "next-intl";',
         'import type { ReactElement, ReactNode } from "react";',
@@ -361,7 +364,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       const expected = [
         'import { useTranslations } from "next-intl";',
         'import type { ReactElement, ReactNode } from "react";',
@@ -408,7 +411,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       const expected = [
         'import { useTranslations } from "next-intl";',
         'import type { ReactElement, ReactNode } from "react";',
@@ -450,7 +453,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).not.toContain("rich(");
       expect(actual).not.toContain("StrictExtract");
       expect(actual).not.toContain("ReactNode");
@@ -469,7 +472,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).toContain("\tlineBreak: string;");
       expect(actual).not.toContain("rich(");
     });
@@ -487,7 +490,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).toContain("\tbroken: string;");
       expect(actual).toContain("\tvalid: string;");
       expect(actual).not.toContain("rich(");
@@ -508,7 +511,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).toContain("\tlabel: string;");
       expect(actual).not.toContain("count");
     });
@@ -526,7 +529,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).toContain("\tlabel: string;");
       expect(actual).not.toContain("enabled");
     });
@@ -544,7 +547,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).toContain("\tlabel: string;");
       expect(actual).not.toContain("empty");
     });
@@ -562,7 +565,7 @@ describe("generate()", () => {
 
       execSync(`node ${cliPath} generate`, { cwd: tempDir });
 
-      const actual = readFileSync(join(tempDir, "output", "use-page-translation.ts"), "utf-8");
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
       expect(actual).toContain("\tlabel: string;");
       expect(actual).not.toContain("items");
     });
