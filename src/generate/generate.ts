@@ -6,6 +6,7 @@ import type { IgnoredProperty } from "./translation/analyze-rich-keys";
 import { loadConfig } from "../config/load-config";
 import { UsageError } from "../errors/usage-error";
 import { generateLocaleFile } from "./available-locale/generate-locale-file";
+import { formatKeyDiscrepancies } from "./check-locale-key-consistency";
 import { getOutputFilename } from "./get-output-filename";
 import { loadInputDirectory } from "./load-input-directory";
 import { generateFile } from "./translation/generate-file";
@@ -34,7 +35,7 @@ function printFilePreview(filename: string, content: string, action: "create" | 
 
 export function generate({ dryRun }: GenerateOptions): void {
   const config = loadConfig();
-  const { data: json, locales } = loadInputDirectory(config.input);
+  const { data: json, locales, keyDiscrepancies } = loadInputDirectory(config.input);
 
   if (!dryRun && !existsSync(config.output)) {
     try {
@@ -91,6 +92,10 @@ export function generate({ dryRun }: GenerateOptions): void {
   }
 
   // Display report
+  if (keyDiscrepancies.length > 0) {
+    console.error(formatKeyDiscrepancies(config.input, locales.length, keyDiscrepancies));
+  }
+
   if (allIgnoredProperties.length > 0) {
     console.warn("\nIgnored properties:");
     for (const { key, reason } of allIgnoredProperties) {

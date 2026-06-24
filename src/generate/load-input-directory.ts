@@ -3,11 +3,18 @@ import { join } from "node:path";
 import { parse } from "valibot";
 
 import { UsageError } from "../errors/usage-error";
+import {
+  findKeyDiscrepancies,
+  type KeyDiscrepancy,
+  type LocaleFileKeys,
+} from "./check-locale-key-consistency";
+import { collectKeyLines } from "./collect-key-lines";
 import { type Input, inputSchema } from "./input";
 
 export interface LoadInputResult {
   data: Input;
   locales: string[];
+  keyDiscrepancies: KeyDiscrepancy[];
 }
 
 export function loadInputDirectory(inputPath: string): LoadInputResult {
@@ -27,6 +34,7 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
   // Each file is a locale; top-level keys are namespaces shared across locales.
   // The same namespace appearing in multiple locale files is expected, not a conflict.
   const merged: Input = {};
+  const localeFileKeys: LocaleFileKeys[] = [];
 
   for (const file of files) {
     const locale = file.replace(/\.json$/, "");
@@ -43,6 +51,7 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
     }
 
     const parsed = parse(inputSchema, json);
+    localeFileKeys.push({ file, keyLines: collectKeyLines(content) });
 
     for (const [key, value] of Object.entries(parsed)) {
       if (typeof value !== "object" || value === null || Array.isArray(value)) {
@@ -62,5 +71,6 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
   return {
     data: merged,
     locales,
+    keyDiscrepancies: findKeyDiscrepancies(localeFileKeys),
   };
 }
