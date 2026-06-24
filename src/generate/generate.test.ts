@@ -786,24 +786,48 @@ describe("generate()", () => {
       }).toThrow("Expected Object");
     });
 
-    test("should throw UsageError when duplicate top-level keys exist across files", () => {
+    test("should treat shared top-level keys across locale files as one namespace", () => {
       mkdirSync(join(tempDir, "messages"));
       writeFileSync(
-        join(tempDir, "messages", "en.json"),
+        join(tempDir, "messages", "en-US.json"),
         JSON.stringify({ common: { key: "en" } }),
       );
       writeFileSync(
-        join(tempDir, "messages", "ja.json"),
+        join(tempDir, "messages", "ja-JP.json"),
         JSON.stringify({ common: { key: "ja" } }),
       );
       writeFileSync(
         join(tempDir, "intl-typegen.config.yaml"),
-        ["input: ./messages", "output: ./output", "overwrite: false"].join("\n"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
       );
 
-      expect(() => {
-        execSync(`node ${cliPath} generate`, { cwd: tempDir, encoding: "utf-8", stdio: "pipe" });
-      }).toThrow("Duplicate top-level key");
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      // A single namespace file is generated, shared across both locales.
+      const actual = readFileSync(join(tempDir, "output", "use-common-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type CommonDictionary = DeepReadonly<{",
+        "\tkey: string;",
+        "}>;",
+        "",
+        "type CommonTranslations = DeepReadonly<{",
+        "\t(key: keyof CommonDictionary): string;",
+        "}>;",
+        "",
+        "export function useCommonTranslations(): CommonTranslations {",
+        '\treturn useTranslations("common");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+
+      // Both locales are listed in available-locale.ts.
+      const localeFile = readFileSync(join(tempDir, "output", "available-locale.ts"), "utf-8");
+      expect(localeFile).toContain('"en-US"');
+      expect(localeFile).toContain('"ja-JP"');
     });
   });
 });

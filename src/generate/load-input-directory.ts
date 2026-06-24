@@ -15,15 +15,18 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
     throw new UsageError(`Input directory not found: ${inputPath}`);
   }
 
-  const files = readdirSync(inputPath).filter((file) => file.endsWith(".json"));
+  const files = readdirSync(inputPath)
+    .filter((file) => file.endsWith(".json"))
+    .sort();
 
   if (files.length === 0) {
     throw new UsageError(`Input directory contains no JSON files: ${inputPath}`);
   }
 
   const locales: string[] = [];
+  // Each file is a locale; top-level keys are namespaces shared across locales.
+  // The same namespace appearing in multiple locale files is expected, not a conflict.
   const merged: Input = {};
-  const keySourceMap: Record<string, string> = {};
 
   for (const file of files) {
     const locale = file.replace(/\.json$/, "");
@@ -42,23 +45,22 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
     const parsed = parse(inputSchema, json);
 
     for (const [key, value] of Object.entries(parsed)) {
-      if (keySourceMap[key]) {
-        throw new UsageError(
-          `Duplicate top-level key "${key}" found in ${file} and ${keySourceMap[key]}`,
-        );
-      }
-
       if (typeof value !== "object" || value === null || Array.isArray(value)) {
         throw new UsageError(`Top-level value for "${key}" must be an object in ${file}`);
       }
 
-      keySourceMap[key] = file;
+      // Generate the namespace type from the first locale that defines it.
+      // Subsequent locales are assumed to share the same structure.
+      if (key in merged) {
+        continue;
+      }
+
       merged[key] = value;
     }
   }
 
   return {
     data: merged,
-    locales: locales.sort(),
+    locales,
   };
 }
