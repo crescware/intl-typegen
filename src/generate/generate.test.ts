@@ -1006,6 +1006,52 @@ describe("generate()", () => {
       expect(localeFile).toContain('"en-US"');
       expect(localeFile).toContain('"ja-JP"');
     });
+
+    test("should include a key defined only in a later-sorted locale in the dictionary", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // en-US sorts first and lacks `cancel`; ja-JP (later) introduces it. The
+      // dictionary is the UNION of keys across locales, so `cancel` must reach the
+      // type, while the missing-in-en-US discrepancy is still reported on stderr.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ common: { ok: "OK" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({ common: { ok: "OK", cancel: "キャンセル" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      const result = spawnSync("node", [cliPath, "generate"], { cwd: tempDir, encoding: "utf-8" });
+      expect(result.status).toBe(0);
+
+      const actual = readFileSync(join(tempDir, "output", "use-common-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type CommonDictionary = DeepReadonly<{",
+        "\tok: string;",
+        "\tcancel: string;",
+        "}>;",
+        "",
+        "type CommonTranslations = DeepReadonly<{",
+        "\t(key: keyof CommonDictionary): string;",
+        "}>;",
+        "",
+        "export function useCommonTranslations(): CommonTranslations {",
+        '\treturn useTranslations("common");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+
+      // The later-locale-only key is still flagged as missing in en-US on stderr.
+      expect(result.stderr).toContain('en-US.json: missing key "common.cancel"');
+    });
   });
 
   describe("locale key consistency", () => {

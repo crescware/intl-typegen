@@ -70,7 +70,7 @@ ${indent}): ReactNode;`;
 export function generateFile(
   name: string,
   obj: Record<string, JsonValue>,
-  localeVariants: readonly Record<string, JsonValue>[] = [obj],
+  localeVariants: readonly Record<string, JsonValue>[],
 ): GenerateFileResult {
   const { richKeys, warnings, ignoredProperties } = analyzeRichKeysAcrossLocales(
     obj,

@@ -84,6 +84,10 @@ export function generate({ dryRun }: GenerateOptions): void {
       continue;
     }
 
+    // `localeMessages` and `json` are built in lockstep by loadInputDirectory, so
+    // every namespace key here has a matching entry. The `?? [value]` only narrows
+    // the `T | undefined` that noUncheckedIndexedAccess gives the lookup; it is not
+    // a reachable fallback.
     const { content, warnings, ignoredProperties } = generateFile(
       key,
       value,
