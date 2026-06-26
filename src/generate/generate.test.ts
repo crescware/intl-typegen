@@ -590,6 +590,63 @@ describe("generate()", () => {
       expect(actual).toEqual(expected);
     });
 
+    test("should union rich() tags across three locales with differing tag counts", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // en-US has 1 tag, fr-FR has 2, ja-JP has 3 — all different counts. The
+      // generated rich() must expose the union of every locale's tags.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ page: { terms: "Agree to <bold>Terms</bold>" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "fr-FR.json"),
+        JSON.stringify({
+          page: { terms: "<bold>Conditions</bold> et <italic>confidentialité</italic>" },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({
+          page: { terms: "<bold>規約</bold><italic>と</italic><underline>プライバシー</underline>" },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tterms: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "terms">,',
+        "\t\toptions: {",
+        "\t\t\tbold: (chunk: ReactNode) => ReactElement;",
+        "\t\t\titalic: (chunk: ReactNode) => ReactElement;",
+        "\t\t\tunderline: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
     test("should keep rich() when the first-sorted locale's value is malformed ICU", () => {
       mkdirSync(join(tempDir, "messages"));
       // en-US sorts first and is malformed ICU; the <b> tag exists only in ja-JP.

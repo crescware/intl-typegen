@@ -189,6 +189,30 @@ describe("analyzeRichKeysAcrossLocales()", () => {
     expect(actual.richKeys).toEqual({ msg: ["terms", "privacy"] });
   });
 
+  test("unions tags across three locales with differing tag counts (nested)", () => {
+    // en=1 tag, fr=2 tags, ja=3 tags — all different counts. The result must be
+    // the union (here the largest set), not whichever locale was inspected first.
+    const en = { terms: "<bold>a</bold>" };
+    const fr = { terms: "<bold>a</bold><italic>b</italic>" };
+    const ja = { terms: "<bold>a</bold><italic>b</italic><underline>c</underline>" };
+
+    const actual = analyzeRichKeysAcrossLocales({ terms: "<bold>a</bold>" }, [en, fr, ja]);
+    expect(actual.richKeys).toEqual({ terms: ["bold", "italic", "underline"] });
+  });
+
+  test("unions disjoint tags across three locales (result exceeds any single locale)", () => {
+    // Each locale carries different tags (counts 1, 3, 2). No single locale holds
+    // them all, so the union must be strictly larger than the largest locale.
+    const en = { terms: "<a>x</a>" };
+    const fr = { terms: "<e>v</e><f>u</f>" };
+    const ja = { terms: "<b>y</b><c>z</c><d>w</d>" };
+
+    const actual = analyzeRichKeysAcrossLocales({ terms: "<a>x</a>" }, [en, fr, ja]);
+    expect(Object.keys(actual.richKeys)).toEqual(["terms"]);
+    const tags = [...(actual.richKeys["terms"] ?? [])].sort();
+    expect(tags).toEqual(["a", "b", "c", "d", "e", "f"]);
+  });
+
   test("deduplicates a tag shared by multiple locales", () => {
     const en = { msg: "<b>Hi</b>" };
     const ja = { msg: "<b>やあ</b>" };
