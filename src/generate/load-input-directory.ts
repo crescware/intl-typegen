@@ -10,9 +10,16 @@ import {
 } from "./check-locale-key-consistency";
 import { collectKeyLines } from "./collect-key-lines";
 import { type Input, inputSchema } from "./input";
+import { type JsonValue } from "./translation/json-value";
 
 export interface LoadInputResult {
   data: Input;
+  /**
+   * Every locale's object for each namespace, keyed by namespace. Unlike `data`
+   * (a single merged structure), this keeps each locale's messages intact so
+   * rich() tags can be unioned across locales during type generation.
+   */
+  localeMessages: Record<string, Record<string, JsonValue>[]>;
   locales: string[];
   keyDiscrepancies: KeyDiscrepancy[];
 }
@@ -34,6 +41,7 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
   // Each file is a locale; top-level keys are namespaces shared across locales.
   // The same namespace appearing in multiple locale files is expected, not a conflict.
   const merged: Input = {};
+  const localeMessages: Record<string, Record<string, JsonValue>[]> = {};
   const localeFileKeys: LocaleFileKeys[] = [];
 
   for (const file of files) {
@@ -53,23 +61,39 @@ export function loadInputDirectory(inputPath: string): LoadInputResult {
     const parsed = parse(inputSchema, json);
     localeFileKeys.push({ file, keyLines: collectKeyLines(content) });
 
-    for (const [key, value] of Object.entries(parsed)) {
+    for (const [namespace, value] of Object.entries(parsed)) {
       if (typeof value !== "object" || value === null || Array.isArray(value)) {
-        throw new UsageError(`Top-level value for "${key}" must be an object in ${file}`);
+        throw new UsageError(`Top-level value for "${namespace}" must be an object in ${file}`);
       }
 
-      // Generate the namespace type from the first locale that defines it.
-      // Subsequent locales are assumed to share the same structure.
-      if (key in merged) {
-        continue;
+      // Keep every locale's object so rich() tags can later be unioned across
+      // locales: a tag present in only one locale must still reach the type.
+      const variants = localeMessages[namespace];
+      if (variants === undefined) {
+        localeMessages[namespace] = [value];
+      } else {
+        variants.push(value);
       }
 
-      merged[key] = value;
+      // Build the dictionary structure as the union of keys across all locales,
+      // taking each key's value from the first locale that defines it. A fresh
+      // object is used so the per-locale objects in `localeMessages` stay intact.
+      const target = merged[namespace];
+      if (target === undefined) {
+        merged[namespace] = { ...value };
+      } else {
+        for (const [key, keyValue] of Object.entries(value)) {
+          if (!(key in target)) {
+            target[key] = keyValue;
+          }
+        }
+      }
     }
   }
 
   return {
     data: merged,
+    localeMessages,
     locales,
     keyDiscrepancies: findKeyDiscrepancies(localeFileKeys),
   };

@@ -35,7 +35,12 @@ function printFilePreview(filename: string, content: string, action: "create" | 
 
 export function generate({ dryRun }: GenerateOptions): void {
   const config = loadConfig();
-  const { data: json, locales, keyDiscrepancies } = loadInputDirectory(config.input);
+  const {
+    data: json,
+    localeMessages,
+    locales,
+    keyDiscrepancies,
+  } = loadInputDirectory(config.input);
 
   if (!dryRun && !existsSync(config.output)) {
     try {
@@ -79,7 +84,15 @@ export function generate({ dryRun }: GenerateOptions): void {
       continue;
     }
 
-    const { content, warnings, ignoredProperties } = generateFile(key, value);
+    // `localeMessages` and `json` are built in lockstep by loadInputDirectory, so
+    // every namespace key here has a matching entry. The `?? [value]` only narrows
+    // the `T | undefined` that noUncheckedIndexedAccess gives the lookup; it is not
+    // a reachable fallback.
+    const { content, warnings, ignoredProperties } = generateFile(
+      key,
+      value,
+      localeMessages[key] ?? [value],
+    );
     allWarnings.push(...warnings);
     allIgnoredProperties.push(...ignoredProperties);
 

@@ -495,6 +495,183 @@ describe("generate()", () => {
       expect(actual).toContain("\tvalid: string;");
       expect(actual).not.toContain("rich(");
     });
+
+    test("should generate rich() when only one locale has a tag for a shared key", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // en-US sorts first and is plain; the <b> tag exists only in ja-JP. The
+      // generated type must still expose rich() so it covers every locale.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ page: { greeting: "Hello world" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({ page: { greeting: "こんにちは<b>世界</b>" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tgreeting: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "greeting">,',
+        "\t\toptions: {",
+        "\t\t\tb: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should union distinct rich() tags from different locales", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // Each locale wraps the message in a different tag; both must appear.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ page: { agreement: "Agree to the <terms>Terms</terms>" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({ page: { agreement: "<privacy>プライバシー</privacy>に同意する" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tagreement: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "agreement">,',
+        "\t\toptions: {",
+        "\t\t\tterms: (chunk: ReactNode) => ReactElement;",
+        "\t\t\tprivacy: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should union rich() tags across three locales with differing tag counts", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // en-US has 1 tag, fr-FR has 2, ja-JP has 3 — all different counts. The
+      // generated rich() must expose the union of every locale's tags.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ page: { terms: "Agree to <bold>Terms</bold>" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "fr-FR.json"),
+        JSON.stringify({
+          page: { terms: "<bold>Conditions</bold> et <italic>confidentialité</italic>" },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({
+          page: { terms: "<bold>規約</bold><italic>と</italic><underline>プライバシー</underline>" },
+        }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { ReactElement, ReactNode } from "react";',
+        'import type { DeepReadonly, StrictExtract } from "ts-essentials";',
+        "",
+        "type PageDictionary = DeepReadonly<{",
+        "\tterms: string;",
+        "}>;",
+        "",
+        "type PageTranslations = DeepReadonly<{",
+        "\t(key: keyof PageDictionary): string;",
+        "\trich(",
+        '\t\tkey: StrictExtract<keyof PageDictionary, "terms">,',
+        "\t\toptions: {",
+        "\t\t\tbold: (chunk: ReactNode) => ReactElement;",
+        "\t\t\titalic: (chunk: ReactNode) => ReactElement;",
+        "\t\t\tunderline: (chunk: ReactNode) => ReactElement;",
+        "\t\t},",
+        "\t): ReactNode;",
+        "}>;",
+        "",
+        "export function usePageTranslations(): PageTranslations {",
+        '\treturn useTranslations("page");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+    });
+
+    test("should keep rich() when the first-sorted locale's value is malformed ICU", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // en-US sorts first and is malformed ICU; the <b> tag exists only in ja-JP.
+      // A parse failure in one locale must not strip another locale's rich tags.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ page: { msg: "Unbalanced {count brace" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({ page: { msg: "<b>太字</b>" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      execSync(`node ${cliPath} generate`, { cwd: tempDir });
+
+      const actual = readFileSync(join(tempDir, "output", "use-page-translations.ts"), "utf-8");
+      expect(actual).toContain("\tmsg: string;");
+      expect(actual).toContain("\trich(");
+      expect(actual).toContain('\t\tkey: StrictExtract<keyof PageDictionary, "msg">,');
+      expect(actual).toContain("\t\t\tb: (chunk: ReactNode) => ReactElement;");
+    });
   });
 
   describe("ignored values", () => {
@@ -829,6 +1006,52 @@ describe("generate()", () => {
       expect(localeFile).toContain('"en-US"');
       expect(localeFile).toContain('"ja-JP"');
     });
+
+    test("should include a key defined only in a later-sorted locale in the dictionary", () => {
+      mkdirSync(join(tempDir, "messages"));
+      // en-US sorts first and lacks `cancel`; ja-JP (later) introduces it. The
+      // dictionary is the UNION of keys across locales, so `cancel` must reach the
+      // type, while the missing-in-en-US discrepancy is still reported on stderr.
+      writeFileSync(
+        join(tempDir, "messages", "en-US.json"),
+        JSON.stringify({ common: { ok: "OK" } }),
+      );
+      writeFileSync(
+        join(tempDir, "messages", "ja-JP.json"),
+        JSON.stringify({ common: { ok: "OK", cancel: "キャンセル" } }),
+      );
+      writeFileSync(
+        join(tempDir, "intl-typegen.config.yaml"),
+        ["input: ./messages", "output: ./output", "overwrite: true"].join("\n"),
+      );
+
+      const result = spawnSync("node", [cliPath, "generate"], { cwd: tempDir, encoding: "utf-8" });
+      expect(result.status).toBe(0);
+
+      const actual = readFileSync(join(tempDir, "output", "use-common-translations.ts"), "utf-8");
+      const expected = [
+        'import { useTranslations } from "next-intl";',
+        'import type { DeepReadonly } from "ts-essentials";',
+        "",
+        "type CommonDictionary = DeepReadonly<{",
+        "\tok: string;",
+        "\tcancel: string;",
+        "}>;",
+        "",
+        "type CommonTranslations = DeepReadonly<{",
+        "\t(key: keyof CommonDictionary): string;",
+        "}>;",
+        "",
+        "export function useCommonTranslations(): CommonTranslations {",
+        '\treturn useTranslations("common");',
+        "}",
+        "",
+      ].join("\n");
+      expect(actual).toEqual(expected);
+
+      // The later-locale-only key is still flagged as missing in en-US on stderr.
+      expect(result.stderr).toContain('en-US.json: missing key "common.cancel"');
+    });
   });
 
   describe("locale key consistency", () => {
@@ -865,9 +1088,7 @@ describe("generate()", () => {
       expect(result.stderr).toContain(
         "[intl-typegen] Translation key mismatch across 2 locale files in ",
       );
-      expect(result.stderr).toContain(
-        'en-US.json: missing key "Footer" (defined in ja-JP.json:5)',
-      );
+      expect(result.stderr).toContain('en-US.json: missing key "Footer" (defined in ja-JP.json:5)');
       expect(result.stderr).toContain(
         'ja-JP.json: missing key "Common.cancel" (defined in en-US.json:4)',
       );
