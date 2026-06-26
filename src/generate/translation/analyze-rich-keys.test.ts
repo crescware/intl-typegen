@@ -1,6 +1,10 @@
 import { describe, expect, test } from "vitest";
 
-import { analyzeRichKeys, type AnalyzeRichKeysResult } from "./analyze-rich-keys";
+import {
+  analyzeRichKeys,
+  analyzeRichKeysAcrossLocales,
+  type AnalyzeRichKeysResult,
+} from "./analyze-rich-keys";
 
 describe("analyzeRichKeys()", () => {
   test("returns empty result for plain text values", () => {
@@ -162,5 +166,91 @@ describe("analyzeRichKeys()", () => {
       const actual = analyzeRichKeys({ items: ["one", "two"] });
       expect(actual).toEqual(expected);
     });
+  });
+});
+
+describe("analyzeRichKeysAcrossLocales()", () => {
+  test("unions a tag present in only one locale for a shared key", () => {
+    const en = { greeting: "Hello world" };
+    const ja = { greeting: "こんにちは<b>世界</b>" };
+    const merged = { greeting: "Hello world" };
+
+    const actual = analyzeRichKeysAcrossLocales(merged, [en, ja]);
+    expect(actual.richKeys).toEqual({ greeting: ["b"] });
+  });
+
+  test("merges distinct tags reported by different locales", () => {
+    const en = { msg: "Read the <terms>Terms</terms>" };
+    const ja = { msg: "<privacy>プライバシー</privacy>に同意する" };
+    const merged = { msg: "Read the <terms>Terms</terms>" };
+
+    const actual = analyzeRichKeysAcrossLocales(merged, [en, ja]);
+    // Order follows the merged structure first, then newly seen tags by locale.
+    expect(actual.richKeys).toEqual({ msg: ["terms", "privacy"] });
+  });
+
+  test("deduplicates a tag shared by multiple locales", () => {
+    const en = { msg: "<b>Hi</b>" };
+    const ja = { msg: "<b>やあ</b>" };
+
+    const actual = analyzeRichKeysAcrossLocales({ msg: "<b>Hi</b>" }, [en, ja]);
+    expect(actual.richKeys).toEqual({ msg: ["b"] });
+  });
+
+  test("keeps plain keys empty when no locale has tags", () => {
+    const en = { greeting: "Hello", farewell: "Bye" };
+    const ja = { greeting: "やあ", farewell: "またね" };
+
+    const actual = analyzeRichKeysAcrossLocales({ greeting: "Hello", farewell: "Bye" }, [en, ja]);
+    expect(actual.richKeys).toEqual({ greeting: [], farewell: [] });
+  });
+
+  test("does not produce rich tags for keys absent from the merged structure", () => {
+    // `onlyJa` is not part of the merged dictionary, so its tag must be dropped
+    // to avoid a rich() signature referencing a non-existent key.
+    const en = { greeting: "Hello" };
+    const ja = { greeting: "やあ", onlyJa: "<b>x</b>" };
+
+    const actual = analyzeRichKeysAcrossLocales({ greeting: "Hello" }, [en, ja]);
+    expect(actual.richKeys).toEqual({ greeting: [] });
+  });
+
+  test("keeps another locale's tags when the first locale's value fails ICU parsing", () => {
+    // The merged value is taken from the first-sorted locale, which is malformed
+    // ICU here. The key must stay rich-eligible so ja's <b> tag is not dropped.
+    const en = { msg: "Unbalanced {count brace" };
+    const ja = { msg: "<b>太字</b>" };
+
+    const actual = analyzeRichKeysAcrossLocales({ msg: "Unbalanced {count brace" }, [en, ja]);
+    expect(actual.richKeys).toEqual({ msg: ["b"] });
+    expect(actual.warnings).toHaveLength(1);
+    expect(actual.warnings[0]).toContain("could not be parsed as ICU message");
+  });
+
+  test("deduplicates warnings reported by multiple locales", () => {
+    const en = { msg: "Line<br/>break" };
+    const ja = { msg: "行<br/>区切り" };
+
+    const actual = analyzeRichKeysAcrossLocales({ msg: "Line<br/>break" }, [en, ja]);
+    expect(actual.warnings).toEqual([
+      'Key "msg" contains self-closing tag(s) <br/> which are not supported for rich text.',
+    ]);
+  });
+
+  test("takes ignoredProperties from the merged structure", () => {
+    const en = { label: "hello", count: 42 };
+    const ja = { label: "やあ", count: 7 };
+
+    const actual = analyzeRichKeysAcrossLocales({ label: "hello", count: 42 }, [en, ja]);
+    expect(actual.ignoredProperties).toEqual([
+      { key: "count", reason: "Number values are not valid translation messages" },
+    ]);
+  });
+
+  test("falls back to the merged object when no variants are given", () => {
+    const merged = { msg: "<b>Hi</b>" };
+
+    const actual = analyzeRichKeysAcrossLocales(merged, []);
+    expect(actual.richKeys).toEqual({ msg: ["b"] });
   });
 });

@@ -1,6 +1,10 @@
 import { pascalCase } from "scule";
 
-import { analyzeRichKeys, type IgnoredProperty, type RichKeys } from "./analyze-rich-keys";
+import {
+  analyzeRichKeysAcrossLocales,
+  type IgnoredProperty,
+  type RichKeys,
+} from "./analyze-rich-keys";
 import { generateTypeBody } from "./generate-type-body";
 import { type JsonValue } from "./json-value";
 
@@ -63,8 +67,15 @@ ${indent}): ReactNode;`;
   return signatures.join("\n");
 }
 
-export function generateFile(name: string, obj: Record<string, JsonValue>): GenerateFileResult {
-  const { richKeys, warnings, ignoredProperties } = analyzeRichKeys(obj);
+export function generateFile(
+  name: string,
+  obj: Record<string, JsonValue>,
+  localeVariants: readonly Record<string, JsonValue>[] = [obj],
+): GenerateFileResult {
+  const { richKeys, warnings, ignoredProperties } = analyzeRichKeysAcrossLocales(
+    obj,
+    localeVariants,
+  );
 
   const keysWithTags = Object.entries(richKeys).filter(([, tags]) => tags.length > 0);
   const hasRichKeys = keysWithTags.length > 0;

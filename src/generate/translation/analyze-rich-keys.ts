@@ -145,3 +145,76 @@ export function analyzeRichKeys<T extends string>(
 
   return result as AnalyzeRichKeysResult<T>;
 }
+
+/**
+ * Analyze rich keys using every locale, not just one. A given key may carry rich
+ * tags in some locales but appear as plain text in others (e.g. only `ja-JP`
+ * wraps a phrase in `<b>`). The rich() signature must cover the union of tags
+ * across all locales, otherwise the chunk renderers required by some
+ * translations would be missing from the generated type.
+ *
+ * The dictionary structure comes from `mergedObj`; only its string-valued keys
+ * can receive rich signatures. Tags seen in a locale for a key absent from the
+ * merged structure are dropped, so `rich()` never references a non-existent key.
+ * `ignoredProperties` is taken from the merged structure (deterministic and free
+ * of cross-locale duplicates); warnings are unioned across locales and
+ * deduplicated.
+ */
+export function analyzeRichKeysAcrossLocales(
+  mergedObj: Record<string, JsonValue>,
+  localeVariants: readonly Record<string, JsonValue>[],
+): AnalyzeRichKeysResult<string> {
+  const base = analyzeRichKeys(mergedObj);
+
+  // Seed a tag set for every dictionary key, i.e. every string-valued key in the
+  // merged structure (the same criterion filterValidValues uses to build the
+  // dictionary body). Non-string keys stay out, since they live in
+  // ignoredProperties and never receive a rich() signature.
+  //
+  // Keying off the value type rather than base.richKeys is deliberate: a key
+  // whose merged (first-locale) value fails ICU parsing is omitted from
+  // base.richKeys, yet it still appears in the dictionary. Such a key must stay
+  // rich-eligible so that tags contributed by other locales are not dropped.
+  const tagsByKey = new Map<string, string[]>();
+  for (const [key, value] of Object.entries(mergedObj)) {
+    if (typeof value !== "string") {
+      continue;
+    }
+    tagsByKey.set(key, [...(base.richKeys[key] ?? [])]);
+  }
+
+  const warnings: string[] = [...base.warnings];
+
+  for (const variant of localeVariants) {
+    const analyzed = analyzeRichKeys(variant);
+
+    for (const [key, tags] of Object.entries(analyzed.richKeys)) {
+      const merged = tagsByKey.get(key);
+      if (merged === undefined) {
+        continue;
+      }
+      for (const tag of tags) {
+        if (!merged.includes(tag)) {
+          merged.push(tag);
+        }
+      }
+    }
+
+    for (const warning of analyzed.warnings) {
+      if (!warnings.includes(warning)) {
+        warnings.push(warning);
+      }
+    }
+  }
+
+  const richKeys: Record<string, readonly string[]> = {};
+  for (const [key, tags] of tagsByKey) {
+    richKeys[key] = tags;
+  }
+
+  return {
+    richKeys,
+    warnings,
+    ignoredProperties: base.ignoredProperties,
+  };
+}
